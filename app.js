@@ -106,11 +106,12 @@ function boot() {
     probe.remove();
     const bounds = stage.getBoundingClientRect();
     let cols = Math.floor(bounds.width / cellW);
-    let rows = Math.floor(bounds.height / cellH);
+    const lineSlots = Math.floor(bounds.height / cellH);
+    let rows = Math.floor((lineSlots + 1) / 2);
     if (cols % 2 === 0) cols -= 1;
     if (rows % 2 === 0) rows -= 1;
     cols = Math.max(5, Math.min(ZONE_SIZE, cols));
-    rows = Math.max(5, Math.min(ZONE_SIZE, rows));
+    rows = Math.max(3, Math.min(ZONE_SIZE, rows));
     return { cols, rows };
   }
 
@@ -132,6 +133,7 @@ function boot() {
         map.appendChild(span);
       }
       map.appendChild(document.createTextNode("\n"));
+      if (y < y0 + rows - 1) map.appendChild(document.createTextNode("\n"));
     }
     const under = tileAt(game, game.player.x, game.player.y);
     const where = groundName(under);
