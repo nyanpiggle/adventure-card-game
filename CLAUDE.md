@@ -18,6 +18,6 @@ A change to an app is not finished when its source branch moves. The same turn m
 
 The repo is public, so the hub lists it. No Homepage is set and GitHub Pages is not on, so the card opens <https://github.com/nyanpiggle/adventure-card-game>. That is the source, not a site.
 
-`index.html` is the page to publish later. There is no npm build and no `gh-pages` branch. Do not add either. Creating a Pages site returns 403 with the current token, so do not add a Pages workflow that fails on every push. When Pages can be turned on for `main` at `/`, do that in the same turn, leave Homepage empty, and confirm the card then opens <https://nyanpiggle.github.io/adventure-card-game/>.
+The playable page is static: `index.html`, `styles.css`, `app.js`. Rules are in `NOTES.md`. There is no npm build and no `gh-pages` branch. Do not add either. Creating a Pages site returns 403 with the current token, so do not add a Pages workflow that fails on every push. When Pages can be turned on for `main` at `/`, do that in the same turn, leave Homepage empty, and confirm the card then opens <https://nyanpiggle.github.io/adventure-card-game/>.
 
 Before you say a phone change is done, confirm <https://nyanpiggle.github.io/app-hub/> lists `adventure-card-game` and the card opens <https://github.com/nyanpiggle/adventure-card-game>.

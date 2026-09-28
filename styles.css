@@ -1,0 +1,81 @@
+:root {
+  color-scheme: dark;
+  --bg: #14120e;
+  --ink: #d8d0c2;
+  --dim: #8a8172;
+  --line: #2a261f;
+  --player: #f3ead7;
+  --village: #c5d4a3;
+  --ruin: #e0b59a;
+  --ground: #6f685c;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0.75rem 1.25rem;
+  font-family: Georgia, "Iowan Old Style", Palatino, serif;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+header { margin: 0 0 0.75rem; }
+
+.phase {
+  margin: 0;
+  color: var(--dim);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0.15rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 650;
+}
+
+.status {
+  margin: 0.35rem 0 0;
+  color: var(--dim);
+  font-size: 0.95rem;
+}
+
+#stage {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+}
+
+#map {
+  margin: 0;
+  font-family: ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+  font-size: 15px;
+  line-height: 1.2;
+  white-space: pre;
+}
+
+#map span { color: var(--ground); }
+#map span.p { color: var(--player); }
+#map span.v { color: var(--village); }
+#map span.r { color: var(--ruin); }
+
+.hint {
+  margin: 0.75rem 0 0;
+  color: var(--dim);
+  font-size: 0.85rem;
+  text-align: center;
+}
