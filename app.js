@@ -106,8 +106,7 @@ function boot() {
     probe.remove();
     const bounds = stage.getBoundingClientRect();
     let cols = Math.floor(bounds.width / cellW);
-    const lineSlots = Math.floor(bounds.height / cellH);
-    let rows = Math.floor((lineSlots + 1) / 2);
+    let rows = Math.floor(bounds.height / Math.max(cellW, cellH));
     if (cols % 2 === 0) cols -= 1;
     if (rows % 2 === 0) rows -= 1;
     cols = Math.max(5, Math.min(ZONE_SIZE, cols));
@@ -123,6 +122,8 @@ function boot() {
     const y0 = Math.min(Math.max(game.player.y - halfR, 0), ZONE_SIZE - rows);
     map.replaceChildren();
     for (let y = y0; y < y0 + rows; y++) {
+      const row = document.createElement("div");
+      row.className = "row";
       for (let x = x0; x < x0 + cols; x++) {
         const glyph = glyphAt(game, x, y);
         const span = document.createElement("span");
@@ -130,10 +131,15 @@ function boot() {
         if (glyph === TILES.player) span.className = "p";
         else if (glyph === TILES.village) span.className = "v";
         else if (glyph === TILES.ruin) span.className = "r";
-        map.appendChild(span);
+        row.appendChild(span);
       }
-      map.appendChild(document.createTextNode("\n"));
-      if (y < y0 + rows - 1) map.appendChild(document.createTextNode("\n"));
+      map.appendChild(row);
+      if (y < y0 + rows - 1) {
+        const blank = document.createElement("div");
+        blank.className = "blank";
+        blank.setAttribute("aria-hidden", "true");
+        map.appendChild(blank);
+      }
     }
     const under = tileAt(game, game.player.x, game.player.y);
     const where = groundName(under);
