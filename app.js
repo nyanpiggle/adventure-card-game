@@ -105,8 +105,9 @@ function boot() {
     const cellH = probe.getBoundingClientRect().height || 18;
     probe.remove();
     const bounds = stage.getBoundingClientRect();
-    let cols = Math.floor(bounds.width / cellW);
-    let rows = Math.floor(bounds.height / Math.max(cellW, cellH));
+    const charW = cellW / TILES.empty.length;
+    let cols = Math.floor((bounds.width - charW * 6) / cellW);
+    let rows = Math.floor((bounds.height - cellH * 2) / Math.max(cellW, cellH));
     if (cols % 2 === 0) cols -= 1;
     if (rows % 2 === 0) rows -= 1;
     cols = Math.max(5, Math.min(ZONE_SIZE, cols));
@@ -120,27 +121,77 @@ function boot() {
     const halfR = Math.floor(rows / 2);
     const x0 = Math.min(Math.max(game.player.x - halfC, 0), ZONE_SIZE - cols);
     const y0 = Math.min(Math.max(game.player.y - halfR, 0), ZONE_SIZE - rows);
-    map.replaceChildren();
-    for (let y = y0; y < y0 + rows; y++) {
-      const row = document.createElement("div");
-      row.className = "row";
-      for (let x = x0; x < x0 + cols; x++) {
-        const glyph = glyphAt(game, x, y);
-        const span = document.createElement("span");
-        span.textContent = glyph;
-        if (glyph === TILES.player) span.className = "p";
-        else if (glyph === TILES.village) span.className = "v";
-        else if (glyph === TILES.ruin) span.className = "r";
-        row.appendChild(span);
-      }
-      map.appendChild(row);
-      if (y < y0 + rows - 1) {
-        const blank = document.createElement("div");
-        blank.className = "blank";
-        blank.setAttribute("aria-hidden", "true");
-        map.appendChild(blank);
-      }
+    const mid = y0 + Math.floor(rows / 2);
+    const width = cols * TILES.empty.length + 6;
+
+    function compassEdge(letter) {
+      const between = width - 4;
+      const left = Math.floor((between - 1) / 2);
+      const right = between - 1 - left;
+      const edge = document.createElement("div");
+      edge.className = "edge";
+      edge.append(document.createTextNode(" ×" + "=".repeat(left)));
+      const mark = document.createElement("span");
+      mark.className = "compass";
+      mark.textContent = letter;
+      edge.append(mark);
+      edge.append(document.createTextNode("=".repeat(right) + "× "));
+      return edge;
     }
+
+    function side(kind) {
+      const el = document.createElement("span");
+      el.className = "side";
+      if (kind === "W") {
+        const mark = document.createElement("span");
+        mark.className = "compass";
+        mark.textContent = "W";
+        el.append(mark, document.createTextNode("||"));
+      } else if (kind === "E") {
+        const mark = document.createElement("span");
+        mark.className = "compass";
+        mark.textContent = "E";
+        el.append(document.createTextNode("||"), mark);
+      } else if (kind === "west") {
+        el.textContent = " ||";
+      } else {
+        el.textContent = "|| ";
+      }
+      return el;
+    }
+
+    function line(y, blank) {
+      const row = document.createElement("div");
+      row.className = blank ? "line blank" : "line";
+      if (blank) row.setAttribute("aria-hidden", "true");
+      const center = !blank && y === mid;
+      row.append(side(center ? "W" : "west"));
+      const cells = document.createElement("span");
+      cells.className = "cells";
+      if (blank) {
+        cells.textContent = " ".repeat(cols * TILES.empty.length);
+      } else {
+        for (let x = x0; x < x0 + cols; x++) {
+          const glyph = glyphAt(game, x, y);
+          const span = document.createElement("span");
+          span.textContent = glyph;
+          if (glyph === TILES.player) span.className = "p";
+          else if (glyph === TILES.village) span.className = "v";
+          else if (glyph === TILES.ruin) span.className = "r";
+          cells.appendChild(span);
+        }
+      }
+      row.append(cells, side(center ? "E" : "east"));
+      return row;
+    }
+
+    map.replaceChildren();
+    map.append(compassEdge("N"));
+    for (let y = y0; y < y0 + rows; y++) {
+      map.append(line(y, false));
+      if (y < y0 + rows - 1) map.append(line(y, true));
+    }
+    map.append(compassEdge("S"));
     const under = tileAt(game, game.player.x, game.player.y);
     const where = groundName(under);
     status.textContent = notice || `${where} · ${game.player.x}, ${game.player.y}`;
