@@ -32,6 +32,8 @@ Everything a character or monster has or can do is a card. That includes items, 
 5. **Ruin exploration menu.** Stepping onto `R` opens an ASCII exploration screen where cards can be found or lost.
 6. **Monsters.** Monsters with their own decks, and combat using combat cards.
 7. **Future: portrait and landscape layouts.** Support both orientations and adapt the layout when the phone rotates, similar to how YouTube switches between portrait and full-screen landscape. Until then, design for portrait first.
+8. **Sound effects for the current controls.** Synthesize simple sound effects for swipes and other interactions using the Web Audio API: pure synthesized tones, like a triangle or square wave with a quick decay. No audio files.
+9. **Some sort of library for future sound effects.** A reusable sound module so sounds can be shared and new sound effects added later without duplicating code.
 
 ## Version control
 
