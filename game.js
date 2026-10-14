@@ -1,0 +1,138 @@
+import { STARTING_DECK, STARTING_LOOT, STARTING_PURSE, STARTING_STOCK } from "./cards.js";
+
+export const TILES = {
+  empty: "  .  ",
+  player: "  P  ",
+  village: "  V  ",
+  ruin: "  R  ",
+};
+
+export const ZONE_SIZE = 25;
+
+/** @typedef {"n" | "e" | "s" | "w"} Dir */
+/** @typedef {"map" | "menu" | "deck" | "settings" | "trade" | "ruin"} Screen */
+
+/**
+ * @typedef {{
+ *   phase: "travel",
+ *   screen: Screen,
+ *   world: string[][][][],
+ *   zoneX: number,
+ *   zoneY: number,
+ *   player: { kind: "player", symbol: string, x: number, y: number },
+ *   village: { kind: "village", symbol: string, x: number, y: number },
+ *   ruin: { kind: "ruin", symbol: string, x: number, y: number },
+ *   turns: number,
+ *   purse: number,
+ *   deck: string[],
+ *   deckIndex: number,
+ *   villageStock: string[],
+ *   ruinLoot: string[],
+ *   message: string,
+ * }} Game
+ */
+
+/** @type {Record<Dir, [number, number]>} */
+const STEP = {
+  n: [0, -1],
+  e: [1, 0],
+  s: [0, 1],
+  w: [-1, 0],
+};
+
+/** @returns {Game} */
+export function createGame() {
+  /** @type {Game["player"]} */
+  const player = { kind: "player", symbol: TILES.player, x: 12, y: 18 };
+  /** @type {Game["village"]} */
+  const village = { kind: "village", symbol: TILES.village, x: 12, y: 14 };
+  /** @type {Game["ruin"]} */
+  const ruin = { kind: "ruin", symbol: TILES.ruin, x: 4, y: 3 };
+
+  /** @type {string[][]} */
+  const zone = [];
+  for (let y = 0; y < ZONE_SIZE; y++) {
+    /** @type {string[]} */
+    const row = [];
+    for (let x = 0; x < ZONE_SIZE; x++) row.push(TILES.empty);
+    zone.push(row);
+  }
+  const villageRow = zone[village.y];
+  const ruinRow = zone[ruin.y];
+  if (!villageRow || !ruinRow) throw new Error("Zone too small for landmarks");
+  villageRow[village.x] = village.symbol;
+  ruinRow[ruin.x] = ruin.symbol;
+
+  return {
+    phase: "travel",
+    screen: "map",
+    world: [[zone]],
+    zoneX: 0,
+    zoneY: 0,
+    player,
+    village,
+    ruin,
+    turns: 0,
+    purse: STARTING_PURSE,
+    deck: [...STARTING_DECK],
+    deckIndex: 0,
+    villageStock: [...STARTING_STOCK],
+    ruinLoot: [...STARTING_LOOT],
+    message: "",
+  };
+}
+
+/** @param {Game} game */
+export function zoneOf(game) {
+  const row = game.world[game.zoneY];
+  const zone = row?.[game.zoneX];
+  if (!zone) throw new Error("Missing zone");
+  return zone;
+}
+
+/**
+ * @param {Game} game
+ * @param {number} x
+ * @param {number} y
+ */
+export function tileAt(game, x, y) {
+  const tile = zoneOf(game)[y]?.[x];
+  if (tile == null) throw new Error(`Off the zone: ${x}, ${y}`);
+  return tile;
+}
+
+/**
+ * The picture. The player covers the ground; the array keeps the ground.
+ * @param {Game} game
+ * @param {number} x
+ * @param {number} y
+ */
+export function glyphAt(game, x, y) {
+  if (game.player.x === x && game.player.y === y) return game.player.symbol;
+  return tileAt(game, x, y);
+}
+
+/**
+ * One square, cardinal only. Returns false at the edge of the zone.
+ * @param {Game} game
+ * @param {Dir} dir
+ */
+export function travel(game, dir) {
+  const step = STEP[dir];
+  if (!step) return false;
+  const [dx, dy] = step;
+  const x = game.player.x + dx;
+  const y = game.player.y + dy;
+  if (x < 0 || y < 0 || x >= ZONE_SIZE || y >= ZONE_SIZE) return false;
+  game.player.x = x;
+  game.player.y = y;
+  game.turns += 1;
+  return true;
+}
+
+/** @param {string} symbol */
+export function groundName(symbol) {
+  if (symbol === TILES.village) return "Village";
+  if (symbol === TILES.ruin) return "Ruin";
+  return "Open ground";
+}

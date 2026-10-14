@@ -1,5 +1,5 @@
 # Adventure card game
 
-ASCII travel on one 25×25 zone. Rules and coordinates are in [NOTES.md](NOTES.md).
+ASCII travel on one 25×25 zone. Rules are in [NOTES.md](NOTES.md).
 
-Swipe the screen to move one square north, west, south, or east.
+Swipe, the arrow keys, or the on-screen arrows move one square. Open the menu for your deck and settings. Step on `V` to trade. Step on `R` to search the ruin.

@@ -1,98 +1,226 @@
-:root {
-  color-scheme: dark;
+html,
+body {
+  margin: 0;
+  background: #14120e;
+  color: #d8d0c2;
+}
+
+.game-root {
   --bg: #14120e;
   --ink: #d8d0c2;
   --dim: #8a8172;
-  --line: #2a261f;
-  --player: #f3ead7;
-  --village: #c5d4a3;
-  --ruin: #e0b59a;
+  --white: #f4f4f4;
+  --orange: #ff8700;
+  --green: #5fff87;
+  --red: #ff5555;
+  --yellow: #fff56b;
+  --blue: #6cb6ff;
   --ground: #6f685c;
-}
+  --locked: #5c564c;
 
-* { box-sizing: border-box; }
-
-html, body {
-  margin: 0;
-  height: 100%;
-  background: var(--bg);
-  color: var(--ink);
-}
-
-body {
-  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 1rem 0.75rem 1.25rem;
-  font-family: Georgia, "Iowan Old Style", Palatino, serif;
+  padding: 0.85rem 0.75rem calc(4.75rem + env(safe-area-inset-bottom));
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Georgia, "Iowan Old Style", Palatino, "Palatino Linotype", serif;
   overflow: hidden;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
 }
 
-header { margin: 0 0 0.75rem; }
+.game-root header {
+  margin: 0 0 0.65rem;
+  flex: none;
+}
 
-.phase {
+.game-root .phase {
   margin: 0;
-  color: var(--dim);
-  font-size: 0.75rem;
-  letter-spacing: 0.14em;
+  color: var(--orange);
+  font-family: ui-monospace, "Cascadia Mono", "Source Code Pro", Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
-h1 {
-  margin: 0.15rem 0 0;
-  font-size: 1.35rem;
+.game-root h1 {
+  margin: 0.12rem 0 0;
+  font-size: 1.45rem;
   font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--white);
 }
 
-.status {
-  margin: 0.35rem 0 0;
+.game-root .status {
+  margin: 0.3rem 0 0;
+  min-height: 1.3em;
   color: var(--dim);
   font-size: 0.95rem;
 }
 
-#stage {
+.game-root .stage {
   flex: 1;
-  display: grid;
-  place-items: center;
   min-height: 0;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
-#map {
+.game-root .stage.is-map {
+  align-items: flex-start;
+  touch-action: none;
+}
+
+.game-root #map {
   margin: 0;
-  font-family: ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+  font-family: ui-monospace, "Cascadia Mono", "Source Code Pro", Menlo, Consolas, monospace;
   font-size: 15px;
   line-height: 1;
   white-space: pre;
 }
 
-#map .line {
+.game-root #map .line {
   display: flex;
   align-items: center;
   line-height: 1;
   white-space: pre;
 }
 
-#map .line.blank {
-  height: max(1.25em, calc(5ch - 1em));
+.game-root #map .line.blank {
+  height: max(1.15em, calc(5ch - 1em));
 }
 
-#map .edge,
-#map .side { color: var(--dim); }
-
-#map .compass { color: var(--ink); }
-
-#map span { color: var(--ground); }
-#map span.p { color: var(--player); }
-#map span.v { color: var(--village); }
-#map span.r { color: var(--ruin); }
-#map span.compass { color: var(--ink); }
-
-.hint {
-  margin: 0.75rem 0 0;
+.game-root #map .edge,
+.game-root #map .side {
   color: var(--dim);
-  font-size: 0.85rem;
+}
+
+.game-root #map .compass {
+  color: var(--orange);
+}
+
+.game-root #map .g {
+  color: var(--ground);
+}
+
+.game-root #map .p {
+  color: var(--white);
+}
+
+.game-root #map .v {
+  color: var(--green);
+}
+
+.game-root #map .r {
+  color: var(--red);
+}
+
+.game-root .panel {
+  width: min(100%, 26rem);
+  padding-bottom: 0.5rem;
+  font-family: ui-monospace, "Cascadia Mono", "Source Code Pro", Menlo, Consolas, monospace;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.game-root .panel-line {
+  margin: 0.15rem 0;
+  white-space: pre-wrap;
+}
+
+.game-root .c-white { color: var(--white); }
+.game-root .c-orange { color: var(--orange); }
+.game-root .c-green { color: var(--green); }
+.game-root .c-red { color: var(--red); }
+.game-root .c-yellow { color: var(--yellow); }
+.game-root .c-blue { color: var(--blue); }
+.game-root .c-dim { color: var(--dim); }
+
+.game-root .card {
+  margin: 0.45rem 0 0.7rem;
+  font-family: ui-monospace, "Cascadia Mono", "Source Code Pro", Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: pre;
+  color: var(--ink);
+}
+
+.game-root .menu-btn,
+.game-root .arrow {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.65rem 0.15rem;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-family: inherit;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.game-root .menu-btn:disabled {
+  color: var(--locked);
+}
+
+.game-root .pair {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.game-root .pair .menu-btn {
+  width: auto;
+  color: var(--yellow);
+}
+
+.game-root .pad {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  margin-top: 0.35rem;
+}
+
+.game-root .pad .menu-btn {
+  width: auto;
+  color: var(--yellow);
+  text-align: center;
+}
+
+.game-root .cross {
+  display: grid;
+  grid-template-columns: repeat(3, 4.6rem);
+  justify-content: center;
+}
+
+.game-root .arrow {
+  width: auto;
+  min-width: 4.6rem;
+  text-align: center;
+  color: var(--orange);
+  padding: 0.45rem 0.2rem;
+}
+
+.game-root .arrow.n { grid-column: 2; grid-row: 1; }
+.game-root .arrow.w { grid-column: 1; grid-row: 2; }
+.game-root .arrow.s { grid-column: 2; grid-row: 2; }
+.game-root .arrow.e { grid-column: 3; grid-row: 2; }
+
+.game-root .hint {
+  flex: none;
+  margin: 0.35rem 0 0;
+  color: var(--dim);
+  font-family: ui-monospace, "Cascadia Mono", "Source Code Pro", Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
   text-align: center;
 }

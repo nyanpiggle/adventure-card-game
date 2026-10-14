@@ -4,7 +4,22 @@ Read this before editing. This is the only agent guide in the repo (there is no 
 
 ## What this game is
 
-An ASCII adventure card game for a phone. Today only the travel phase exists: one 25×25 zone you move around by swiping. Rules and coordinates live in `NOTES.md`.
+An ASCII adventure card game for a phone. Travel is one 25×25 zone you move around by swiping. The game menu opens the deck and settings. Stepping on the village trades cards. Stepping on the ruin can find or lose cards. Rules and coordinates live in `NOTES.md`.
+
+### Code layout
+
+Plain scripts, loaded by `index.html` through `app.js`. No build step.
+
+- `game.js` — zone, coordinates, travel
+- `cards.js` — card definitions, coin, trade, ruin pile
+- `art.js` — ASCII pictures and card text wrapping (not stored on the card)
+- `settings.js` — movement toggles and `localStorage`
+- `direction.js` — swipes and arrow keys
+- `render.js` — map and card drawing
+- `mount.js` — screens and input
+- `app.js` — starts the game on `#app`
+- `styles.css` — colour
+- `NOTES.md` — rules
 
 ### Hard rules
 
@@ -25,34 +40,22 @@ Everything a character or monster has or can do is a card. That includes items, 
 
 ## Task list (do these roughly in order)
 
-1. **Lay out `app.js`.** Split it into clear sections (or a few plain script files loaded by `index.html`): game state, map and zone data, card data and deck logic, rendering, and input (swipe and arrow keys). Behaviour must stay the same. Describe the layout in this guide when done.
-2. **Colour.** Add colour to the ASCII display. ANSI colours can be applied to text in the browser, so use them to make the game more visually interesting.
-
-   Reference only (not required implementation): the old Pydroid Python Rubik's cube solver (`cube.py` lines 9–15, April 2025) used these terminal codes. This game is JavaScript in a browser, so treat them as a guide for which colours to aim for, not as codes to paste in:
-
-   - White: `\033[97m`
-   - Orange: `\033[38;5;208m` (256-colour)
-   - Green: `\033[92m`
-   - Red: `\033[91m`
-   - Yellow: `\033[93m`
-   - Blue: `\033[94m`
-   - Reset: `\033[0m`
-
-   That project's `utils.py` also used the reset code when printing each square.
-3. **Settings menu.** An ASCII settings menu reachable from the map (see task 11, the game menu, for where it lives). Movement inputs are two separate toggles: on-screen ASCII arrow buttons (north, west, south, east; each tap moves one square, same as a swipe or arrow key) and swipe controls. Either or both can be on, but never both off, because then you could not move. One way: grey out the remaining toggle so it cannot be switched off while it is the only one on. Remember settings between visits (`localStorage`). Document controls and settings in `NOTES.md`.
-4. **Card system.** Card data model, player deck, and an ASCII deck view reachable from the map. Write the card rules into `NOTES.md`.
-5. **Village trading menu.** Stepping onto `V` opens an ASCII trading screen using card `value`.
-6. **Ruin exploration menu.** Stepping onto `R` opens an ASCII exploration screen where cards can be found or lost.
+1. **Done. Lay out the scripts.** See "Code layout" above. Behaviour of travel is unchanged: one square, cardinal only, player drawn on top of the ground.
+2. **Done. Colour.** White, orange, green, red, yellow, and blue, mapped in `styles.css`. See `NOTES.md`.
+3. **Done. Settings menu.** Reached from the game menu. On-screen arrows and swipe are separate toggles. One of them must stay on. Remembered in `localStorage`. Documented in `NOTES.md`.
+4. **Done. Card system.** Card data, the player deck, and an ASCII deck view from the menu. Rules are in `NOTES.md`.
+5. **Done. Village trading menu.** Stepping onto `V` opens it. Buy and sell by `value`. A swap is a sell and then a buy.
+6. **Done. Ruin exploration menu.** Stepping onto `R` opens it. Sift to find a card. Cast a card in to lose it, sometimes getting one back.
 7. **Monsters.** Monsters with their own decks, and combat using combat cards.
 8. **Future: portrait and landscape layouts.** Support both orientations and adapt the layout when the phone rotates, similar to how YouTube switches between portrait and full-screen landscape. Until then, design for portrait first.
 9. **Sound effects for the current controls.** Synthesize simple sound effects for swipes and other interactions using the Web Audio API: pure synthesized tones, like a triangle or square wave with a quick decay. No audio files.
 10. **Some sort of library for future sound effects.** A reusable sound module so sounds can be shared and new sound effects added later without duplicating code.
-11. **A game menu.** We do need a menu: somewhere to put the settings (task 3), including the movement controls toggles.
+11. **Done. A game menu.** `[ Menu ]` or the `M` key. It holds the deck and the settings.
 12. **Inn at the village, and saving.** An inn at the village where you spend money to replenish health. It is also a save point: if you die, you end up back at the inn with everything you had when you were last there. This started as death insurance, but make it a real full save if feasible. Save with the browser's `localStorage` (no cookies, no consent pop-up). What is saved:
     - **Player:** basically a single small array or object. Which cards are in your inventory (card IDs only; card values and stats are baked into the game engine and are not saved), your health, and your coordinates.
     - **World:** the location of any known monsters, and the locations of the villages and ruins in that save file.
-13. **Cards.** It is an adventure card game without any cards, so add them: the card data itself, building on task 4's card system. Do this before task 14.
-14. **Display cards as ASCII art.** Every card gets a simple ASCII illustration and a nice border. The art is not stored in the card data; it is part of the display function. Layout, inside the frame from top to bottom: the card name just above the picture, the picture, then text below the picture describing how the card functions. Start with an art area of 5 rows of 21 ASCII characters. Those dimensions may not be perfect once the frame, name, and function text are included, so adjust as needed.
+13. **Done. Cards.** The starter set is in `cards.js` and `NOTES.md`. Do this before task 14. It is done.
+14. **Done. Display cards as ASCII art.** Name, a 5×21 picture, then the function text, inside a border. The picture is drawn by `art.js`, not stored on the card.
 15. **Card tags.** Cards have tags, like `attack` and `metal`. Interaction rules can key off tags. Example: slimes have the `acid` tag, and if you hit anything acid with a metal card, the acid dissolves it, so using a metal weapon on a slime is a bad trade.
 16. **Creature cards.** Creatures have their own creature card, and you attack the creature card rather than the creature directly. (Whether creatures themselves can have tags is not decided.)
 17. **Player card.** The player has their own player card holding their stats, such as health and deck size.
