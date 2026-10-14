@@ -27,6 +27,18 @@ Everything a character or monster has or can do is a card. That includes items, 
 
 1. **Lay out `app.js`.** Split it into clear sections (or a few plain script files loaded by `index.html`): game state, map and zone data, card data and deck logic, rendering, and input (swipe and arrow keys). Behaviour must stay the same. Describe the layout in this guide when done.
 2. **Colour.** Add colour to the ASCII display. ANSI colours can be applied to text in the browser, so use them to make the game more visually interesting.
+
+   Reference only (not required implementation): the old Pydroid Python Rubik's cube solver (`cube.py` lines 9–15, April 2025) used these terminal codes. This game is JavaScript in a browser, so treat them as a guide for which colours to aim for, not as codes to paste in:
+
+   - White: `\033[97m`
+   - Orange: `\033[38;5;208m` (256-colour)
+   - Green: `\033[92m`
+   - Red: `\033[91m`
+   - Yellow: `\033[93m`
+   - Blue: `\033[94m`
+   - Reset: `\033[0m`
+
+   That project's `utils.py` also used the reset code when printing each square.
 3. **Settings menu.** An ASCII settings menu reachable from the map (see task 11, the game menu, for where it lives). Movement inputs are two separate toggles: on-screen ASCII arrow buttons (north, west, south, east; each tap moves one square, same as a swipe or arrow key) and swipe controls. Either or both can be on, but never both off, because then you could not move. One way: grey out the remaining toggle so it cannot be switched off while it is the only one on. Remember settings between visits (`localStorage`). Document controls and settings in `NOTES.md`.
 4. **Card system.** Card data model, player deck, and an ASCII deck view reachable from the map. Write the card rules into `NOTES.md`.
 5. **Village trading menu.** Stepping onto `V` opens an ASCII trading screen using card `value`.
@@ -53,6 +65,7 @@ Everything a character or monster has or can do is a card. That includes items, 
     - Cooldown: in the overworld, you can't get a random encounter within five turns of the previous one. This applies only to overworld random encounters; in dungeons such as the ruins there is no cooldown.
     - Monsters are cards made with the existing card rules (tasks 13 and 18).
 20. **Random dungeon generator for the ruins.** When you enter a ruin, it takes you straight into a dungeon map. The important part is that the ruins are a randomly generated map rather than a big open area. Give it corridors of random lengths (around three to ten is a starting idea; do not focus too much on exact corridor size) and random rooms of random sizes. Enemies appear in those rooms as markers on the map, just like the village and the ruin do on the overworld, but with different symbols: the first letter of the monster's name.
+21. **Time system.** Turn-based, not real time. Time is an abstract number (not hours) on a scale of at most 100. Good candidate scales are 100 and 36; leave the final choice open for now. Ideally the scale has a lot of different factors. Moving to a new square advances time by one. Other actions can advance it too — for example, sleeping at the inn moves time forward by 30. The map's colours shift with time of day: brighter and more vibrant in daytime, darker and more desaturated at night (ties into task 2). Random encounter probabilities can also vary by time of day (ties into task 19).
 
 ## Version control
 
