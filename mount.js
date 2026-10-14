@@ -1,7 +1,8 @@
-import { buyCard, cardById, castIntoRuin, deckWeight, sellCard, siftRuin } from "./cards.js";
+import { buyCard, canUseInField, cardById, castIntoRuin, deckWeight, sellCard, siftRuin, useFieldCard } from "./cards.js";
+import { applyDown, beginFight, claimSpoil, fleeFight, hpBar, playCombatCard, rollEncounter } from "./combat.js";
 import { KEYS, directionFromSwipe } from "./direction.js";
 import { TILES, createGame, groundName, tileAt, travel } from "./game.js";
-import { renderCard, renderMap } from "./render.js";
+import { renderCard, renderCreature, renderMap, renderPlayer } from "./render.js";
 import { controlLocked, loadSettings, saveSettings, toggleSetting } from "./settings.js";
 
 /** @typedef {import("./game.js").Screen} Screen */
@@ -15,6 +16,8 @@ const PHASE = {
   settings: "Settings",
   trade: "Village",
   ruin: "Ruin",
+  you: "You",
+  fight: "Fight",
 };
 
 /**
@@ -79,7 +82,12 @@ export function mount(root) {
     const under = tileAt(game, game.player.x, game.player.y);
     if (under === TILES.village) game.screen = "trade";
     else if (under === TILES.ruin) game.screen = "ruin";
-    else game.screen = "map";
+    else if (under === TILES.slime) beginFight(game, "slime", false);
+    else {
+      game.screen = "map";
+      const met = rollEncounter(game, under);
+      if (met) beginFight(game, met, true);
+    }
     draw();
   }
 
@@ -105,7 +113,7 @@ export function mount(root) {
 
   function placeLine() {
     const under = tileAt(game, game.player.x, game.player.y);
-    return `${groundName(under)} · ${game.player.x}, ${game.player.y} · ${game.purse} coin`;
+    return `${groundName(under)} · ${game.player.x}, ${game.player.y} · ${game.purse} coin · ${game.health} hp`;
   }
 
   function drawMap() {
@@ -125,6 +133,7 @@ export function mount(root) {
     panel.append(
       button("1  Deck", () => go("deck")),
       button("2  Settings", () => go("settings")),
+      button("3  You", () => go("you")),
       button("0  Back", () => go("map")),
     );
     stage.append(panel);
@@ -133,6 +142,8 @@ export function mount(root) {
   function drawDeck() {
     const panel = panelEl("DECK");
     line(panel, `${game.deck.length} cards · weight ${deckWeight(game.deck)} · ${game.purse} coin`, "c-yellow");
+    line(panel, `Health ${game.health} / ${game.healthMax}`, "c-green");
+    if (game.message) line(panel, game.message, "c-orange");
     if (game.deck.length === 0) {
       line(panel, "Your deck is empty.");
     } else {
@@ -153,6 +164,14 @@ export function mount(root) {
         }),
       );
       panel.append(row);
+      if (id && canUseInField(id)) {
+        panel.append(
+          button("1  Use", () => {
+            game.message = useFieldCard(game, game.deckIndex).message;
+            draw();
+          }),
+        );
+      }
     }
     panel.append(button("0  Back", () => go("menu")));
     stage.append(panel);
@@ -331,6 +350,79 @@ export function mount(root) {
     stage.append(panel);
   }
 
+  function drawYou() {
+    const panel = panelEl("YOU");
+    renderPlayer(panel, game);
+    line(panel, "Plains. Health is on this card, not in the deck.", "c-dim");
+    if (game.message) line(panel, game.message, "c-orange");
+    panel.append(button("0  Back", () => go("menu")));
+    stage.append(panel);
+  }
+
+  function combatChoices() {
+    return game.deck
+      .map((id, index) => ({ id, index, card: cardById(id) }))
+      .filter((entry) => entry.card.use !== "field");
+  }
+
+  function drawFight() {
+    const fight = game.fight;
+    if (!fight) {
+      game.screen = "map";
+      drawMap();
+      return;
+    }
+    const panel = panelEl("FIGHT");
+    renderCreature(panel, fight);
+    line(panel, `You  ${hpBar(game.health, game.healthMax)}  ${game.health}`, "c-white");
+    for (const entry of fight.log) line(panel, entry, "c-orange");
+
+    if (fight.phase === "choose") {
+      const choices = combatChoices();
+      if (choices.length === 0) line(panel, "You have nothing that will fight.", "c-dim");
+      choices.forEach((entry, number) => {
+        panel.append(
+          button(`${number + 1}  ${padName(entry.card.name)} ${entry.card.value}`, () => {
+            playCombatCard(game, entry.index);
+            draw();
+          }),
+        );
+      });
+      panel.append(button("0  Flee", () => {
+        fleeFight(game);
+        draw();
+      }));
+    } else if (fight.phase === "exchange") {
+      panel.append(button("1  Continue", () => {
+        fight.phase = "choose";
+        fight.log = [];
+        draw();
+      }));
+    } else if (fight.phase === "won") {
+      line(panel, "Take one card, or leave them.", "c-dim");
+      fight.deck.forEach((id, index) => {
+        const card = cardById(id);
+        const letter = String.fromCharCode(97 + index);
+        panel.append(
+          button(`${letter}  ${padName(card.name)} ${card.value}`, () => {
+            claimSpoil(game, index);
+            draw();
+          }),
+        );
+      });
+      panel.append(button("0  Leave them", () => {
+        claimSpoil(game, -1);
+        draw();
+      }));
+    } else {
+      panel.append(button("1  Wake", () => {
+        applyDown(game);
+        draw();
+      }));
+    }
+    stage.append(panel);
+  }
+
   /** @param {string} heading */
   function panelEl(heading) {
     const panel = document.createElement("div");
@@ -384,10 +476,12 @@ export function mount(root) {
       else hint.textContent = "Tap an arrow to move one square.";
       return;
     }
-    if (game.screen === "menu") hint.textContent = "Deck, settings, or back to the map.";
-    else if (game.screen === "deck") hint.textContent = "Cards you are carrying.";
+    if (game.screen === "menu") hint.textContent = "Deck, you, settings, or back to the map.";
+    else if (game.screen === "deck") hint.textContent = "Trail bread can be used from here.";
     else if (game.screen === "settings") hint.textContent = "Remembered on this phone.";
     else if (game.screen === "trade") hint.textContent = "Leave when you are done. Step back onto V to return.";
+    else if (game.screen === "you") hint.textContent = "This card is you. The deck is what you carry.";
+    else if (game.screen === "fight") hint.textContent = "Strike the creature card, or flee and take one hit.";
     else hint.textContent = "Step off the ruin when you are done.";
   }
 
@@ -401,6 +495,8 @@ export function mount(root) {
     else if (game.screen === "deck") drawDeck();
     else if (game.screen === "settings") drawSettings();
     else if (game.screen === "trade") drawTrade();
+    else if (game.screen === "you") drawYou();
+    else if (game.screen === "fight") drawFight();
     else drawRuin();
     drawPad();
     drawHint();
@@ -409,6 +505,53 @@ export function mount(root) {
     root.dataset.y = String(game.player.y);
     root.dataset.purse = String(game.purse);
     root.dataset.cards = String(game.deck.length);
+    root.dataset.health = String(game.health);
+  }
+
+  /** @param {string} key */
+  function onFightKey(key) {
+    const fight = game.fight;
+    if (!fight) return;
+    if (fight.phase === "choose") {
+      if (key === "0" || key === "Escape") {
+        fleeFight(game);
+        draw();
+        return;
+      }
+      const digit = Number(key);
+      const choices = combatChoices();
+      if (digit >= 1 && digit <= choices.length) {
+        const choice = choices[digit - 1];
+        if (choice) playCombatCard(game, choice.index);
+        draw();
+      }
+      return;
+    }
+    if (fight.phase === "exchange") {
+      if (key === "1" || key === "Enter" || key === "Escape") {
+        fight.phase = "choose";
+        fight.log = [];
+        draw();
+      }
+      return;
+    }
+    if (fight.phase === "won") {
+      if (key === "0" || key === "Escape") {
+        claimSpoil(game, -1);
+        draw();
+        return;
+      }
+      const letter = key.toLowerCase().charCodeAt(0) - 97;
+      if (letter >= 0 && letter < fight.deck.length) {
+        claimSpoil(game, letter);
+        draw();
+      }
+      return;
+    }
+    if (key === "1" || key === "Enter" || key === "0" || key === "Escape") {
+      applyDown(game);
+      draw();
+    }
   }
 
   /** @param {KeyboardEvent} event */
@@ -429,13 +572,17 @@ export function mount(root) {
 
     if (event.key === "Escape" || event.key === "0") {
       event.preventDefault();
+      if (game.screen === "fight") {
+        onFightKey("0");
+        return;
+      }
       if (pending) {
         clearPending();
         game.message = "";
         draw();
         return;
       }
-      if (game.screen === "deck" || game.screen === "settings") go("menu");
+      if (game.screen === "deck" || game.screen === "settings" || game.screen === "you") go("menu");
       else go("map");
       return;
     }
@@ -443,6 +590,7 @@ export function mount(root) {
     if (game.screen === "menu") {
       if (event.key === "1") go("deck");
       else if (event.key === "2") go("settings");
+      else if (event.key === "3") go("you");
       return;
     }
 
@@ -461,7 +609,18 @@ export function mount(root) {
         event.preventDefault();
         if (game.deck.length) game.deckIndex = (game.deckIndex + 1) % game.deck.length;
         draw();
+      } else if (event.key === "1") {
+        const id = game.deck[game.deckIndex];
+        if (id && canUseInField(id)) {
+          game.message = useFieldCard(game, game.deckIndex).message;
+          draw();
+        }
       }
+      return;
+    }
+
+    if (game.screen === "fight") {
+      onFightKey(event.key);
       return;
     }
 

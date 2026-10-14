@@ -11,7 +11,8 @@ An ASCII adventure card game for a phone. Travel is one 25×25 zone you move aro
 Plain scripts, loaded by `index.html` through `app.js`. No build step.
 
 - `game.js` — zone, coordinates, travel
-- `cards.js` — card definitions, coin, trade, ruin pile
+- `cards.js` — card definitions, tags, coin, trade, ruin pile, creature cards
+- `combat.js` — fights, random encounters, going down
 - `art.js` — ASCII pictures and card text wrapping (not stored on the card)
 - `settings.js` — movement toggles and `localStorage`
 - `direction.js` — swipes and arrow keys
@@ -46,7 +47,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 4. **Done. Card system.** Card data, the player deck, and an ASCII deck view from the menu. Rules are in `NOTES.md`.
 5. **Done. Village trading menu.** Stepping onto `V` opens it. Buy and sell by `value`. A swap is a sell and then a buy.
 6. **Done. Ruin exploration menu.** Stepping onto `R` opens it. Sift to find a card. Cast a card in to lose it, sometimes getting one back.
-7. **Monsters.** Monsters with their own decks, and combat using combat cards.
+7. **Done. Monsters.** Wolf and slime, each with a deck. Combat uses combat cards. Rules are in `NOTES.md`.
 8. **Future: portrait and landscape layouts.** Support both orientations and adapt the layout when the phone rotates, similar to how YouTube switches between portrait and full-screen landscape. Until then, design for portrait first.
 9. **Sound effects for the current controls.** Synthesize simple sound effects for swipes and other interactions using the Web Audio API: pure synthesized tones, like a triangle or square wave with a quick decay. No audio files.
 10. **Some sort of library for future sound effects.** A reusable sound module so sounds can be shared and new sound effects added later without duplicating code.
@@ -56,17 +57,11 @@ Everything a character or monster has or can do is a card. That includes items, 
     - **World:** the location of any known monsters, and the locations of the villages and ruins in that save file.
 13. **Done. Cards.** The starter set is in `cards.js` and `NOTES.md`. Do this before task 14. It is done.
 14. **Done. Display cards as ASCII art.** Name, a 5×21 picture, then the function text, inside a border. The picture is drawn by `art.js`, not stored on the card.
-15. **Card tags.** Cards have tags, like `attack` and `metal`. Interaction rules can key off tags. Example: slimes have the `acid` tag, and if you hit anything acid with a metal card, the acid dissolves it, so using a metal weapon on a slime is a bad trade.
-16. **Creature cards.** Creatures have their own creature card, and you attack the creature card rather than the creature directly. (Whether creatures themselves can have tags is not decided.)
-17. **Player card.** The player has their own player card holding their stats, such as health and deck size.
-18. **Monsters and combat.** We need combat, and to have combat we need monsters. Add monsters, creating their cards with the existing card rules (tasks 4 and 13). Starter monsters: a wolf and a slime.
-19. **Random encounters.** Whenever you swipe to move, there is a chance of a random encounter, depending on the region:
-    - Each 25×25 map has one biome for the whole map. (Per-square biomes may come later; for now use the map's biome.)
-    - The starting area is always a plains biome, no matter what.
-    - In plains, a random encounter can be a wolf.
-    - Chance: 1 in 10 per swipe. This is a rough starting figure: not so often that an injured player can't make it back to the village, not so rare you never meet one.
-    - Cooldown: in the overworld, you can't get a random encounter within five turns of the previous one. This applies only to overworld random encounters; in dungeons such as the ruins there is no cooldown.
-    - Monsters are cards made with the existing card rules (tasks 13 and 18).
+15. **Done. Card tags.** Cards have tags, like `attack` and `metal`. A metal card used on an acid creature is destroyed and deals no harm.
+16. **Done. Creature cards.** The wolf and the slime each have a creature card. You attack that card. Their decks are separate.
+17. **Done. Player card.** The player card holds health and deck size. It is not in the deck. Open it from the game menu.
+18. **Done. Monsters and combat.** Starter monsters are a wolf and a slime. See `NOTES.md`.
+19. **Done. Random encounters.** Plains, wolf only, 1 in 10 on a move onto open ground, and not again until five moves have passed. The slime is a map marker, not a random encounter.
 20. **Random dungeon generator for the ruins.** When you enter a ruin, it takes you straight into a dungeon map. The important part is that the ruins are a randomly generated map rather than a big open area. Give it corridors of random lengths (around three to ten is a starting idea; do not focus too much on exact corridor size) and random rooms of random sizes. Enemies appear in those rooms as markers on the map, just like the village and the ruin do on the overworld, but with different symbols: the first letter of the monster's name.
 21. **Time system.** Turn-based, not real time. Time is an abstract number (not hours) on a scale of at most 100. Good candidate scales are 100 and 36; leave the final choice open for now. Ideally the scale has a lot of different factors. Moving to a new square advances time by one. Other actions can advance it too — for example, sleeping at the inn moves time forward by 30. The map's colours shift with time of day: brighter and more vibrant in daytime, darker and more desaturated at night (ties into task 2). Random encounter probabilities can also vary by time of day (ties into task 19).
 

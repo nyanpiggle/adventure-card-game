@@ -1,5 +1,6 @@
 import { ART_W, artFor, fitCell, valueLine, wrapText } from "./art.js";
-import { cardById } from "./cards.js";
+import { cardById, creatureById, PLAYER } from "./cards.js";
+import { hpBar } from "./combat.js";
 import { TILES, ZONE_SIZE, glyphAt, tileAt } from "./game.js";
 
 /**
@@ -107,6 +108,7 @@ export function renderMap(map, game, stage) {
         if (glyph === TILES.player) cell.className = "p";
         else if (glyph === TILES.village) cell.className = "v";
         else if (glyph === TILES.ruin) cell.className = "r";
+        else if (glyph === TILES.slime) cell.className = "m";
         else cell.className = "g";
         cells.appendChild(cell);
       }
@@ -145,8 +147,57 @@ export function renderCard(parent, id) {
       .slice(0, 4)
       .map((text) => ({ text: fitCell(text), cls: "c-dim" })),
     { text: fitCell(`Use: ${card.use}`), cls: useClass },
+    ...(card.tags.length ? [{ text: fitCell(card.tags.join(" ")), cls: "c-dim" }] : []),
     { text: valueLine(card.value, card.weight), cls: "c-yellow" },
   ];
+  for (const row of rows) {
+    pre.append(span("c-dim", "|"), span(row.cls, row.text), span("c-dim", "|"), document.createTextNode("\n"));
+  }
+  pre.append(span("c-dim", rule));
+  parent.append(pre);
+}
+
+/**
+ * The creature card you are striking. Not a deck card.
+ * @param {HTMLElement} parent
+ * @param {import("./game.js").Fight} fight
+ */
+export function renderCreature(parent, fight) {
+  const creature = creatureById(fight.creatureId);
+  const pre = document.createElement("pre");
+  pre.className = "card";
+  const rule = `+${"-".repeat(ART_W)}+`;
+  const rows = [
+    { text: fitCell(fight.name), cls: "c-red" },
+    ...artFor(fight.creatureId).map((text) => ({ text, cls: "c-red" })),
+    { text: fitCell(creature.tags.join(" ") || "creature"), cls: "c-dim" },
+    { text: fitCell(`HP ${hpBar(fight.health, fight.healthMax)}`), cls: "c-red" },
+    { text: fitCell(`${Math.max(0, fight.health)} / ${fight.healthMax}`), cls: "c-yellow" },
+  ];
+  pre.append(span("c-dim", rule), document.createTextNode("\n"));
+  for (const row of rows) {
+    pre.append(span("c-dim", "|"), span(row.cls, row.text), span("c-dim", "|"), document.createTextNode("\n"));
+  }
+  pre.append(span("c-dim", rule));
+  parent.append(pre);
+}
+
+/**
+ * @param {HTMLElement} parent
+ * @param {import("./game.js").Game} game
+ */
+export function renderPlayer(parent, game) {
+  const pre = document.createElement("pre");
+  pre.className = "card";
+  const rule = `+${"-".repeat(ART_W)}+`;
+  const rows = [
+    { text: fitCell(PLAYER.name), cls: "c-white" },
+    ...artFor(PLAYER.id).map((text) => ({ text, cls: "c-white" })),
+    ...wrapText(PLAYER.text, ART_W).map((text) => ({ text: fitCell(text), cls: "c-dim" })),
+    { text: fitCell(`HP ${hpBar(game.health, game.healthMax)}`), cls: "c-green" },
+    { text: fitCell(`${game.health} / ${game.healthMax}    Deck ${game.deck.length}`), cls: "c-yellow" },
+  ];
+  pre.append(span("c-dim", rule), document.createTextNode("\n"));
   for (const row of rows) {
     pre.append(span("c-dim", "|"), span(row.cls, row.text), span("c-dim", "|"), document.createTextNode("\n"));
   }

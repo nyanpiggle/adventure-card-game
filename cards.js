@@ -1,6 +1,7 @@
 /**
  * Card catalog. Stats live here, not in the save (there is no save yet).
  * The deck stores ids only. Pictures live in art.js, not on the card.
+ * In a fight, value is the harm a card deals. Out of a fight, value is the price.
  */
 
 /**
@@ -11,6 +12,7 @@
  *   weight: number,
  *   value: number,
  *   use: CardUse,
+ *   tags: string[],
  *   text: string,
  * }} Card
  */
@@ -23,6 +25,7 @@ export const CARDS = {
     weight: 2,
     value: 3,
     use: "both",
+    tags: ["wood"],
     text: "A plain staff. It walks with you, and it will do in a fight.",
   },
   bread: {
@@ -31,7 +34,8 @@ export const CARDS = {
     weight: 1,
     value: 2,
     use: "field",
-    text: "Eat it out of a fight. It is not a weapon.",
+    tags: ["food"],
+    text: "Eat it out of a fight. It restores 4 health. It is not a weapon.",
   },
   knife: {
     id: "knife",
@@ -39,6 +43,7 @@ export const CARDS = {
     weight: 1,
     value: 4,
     use: "combat",
+    tags: ["metal", "attack"],
     text: "A short blade. Only useful when something is trying to bite you.",
   },
   charm: {
@@ -47,6 +52,7 @@ export const CARDS = {
     weight: 1,
     value: 5,
     use: "both",
+    tags: ["trinket"],
     text: "Traders pay for it. It is also warm in a fight.",
   },
   rope: {
@@ -55,6 +61,7 @@ export const CARDS = {
     weight: 3,
     value: 3,
     use: "field",
+    tags: ["fiber"],
     text: "Hemp for pits and bundles. No use in a fight.",
   },
   torch: {
@@ -63,6 +70,7 @@ export const CARDS = {
     weight: 1,
     value: 2,
     use: "both",
+    tags: ["fire"],
     text: "Light for the next corner, and a poor club up close.",
   },
   shard: {
@@ -71,8 +79,38 @@ export const CARDS = {
     weight: 1,
     value: 6,
     use: "combat",
+    tags: ["stone", "attack"],
     text: "A flake of the ruin wall. It cuts.",
   },
+  fang: {
+    id: "fang",
+    name: "Fang",
+    weight: 1,
+    value: 3,
+    use: "combat",
+    tags: ["attack", "beast"],
+    text: "A bite. Wolves carry these. It only works in a fight.",
+  },
+  spit: {
+    id: "spit",
+    name: "Acid Spit",
+    weight: 1,
+    value: 2,
+    use: "combat",
+    tags: ["attack", "acid"],
+    text: "A gob of slime. Metal that strikes the slime is eaten instead.",
+  },
+};
+
+/**
+ * The player card. It is not in the deck. Health lives on the player, and this
+ * card is how that stat is shown.
+ */
+export const PLAYER = {
+  id: "you",
+  name: "You",
+  healthMax: 8,
+  text: "A traveller on the plains. Your health is on this card.",
 };
 
 export const STARTING_PURSE = 4;
@@ -83,6 +121,38 @@ export const STARTING_STOCK = ["rope", "torch", "charm"];
 /** @type {string[]} */
 export const STARTING_LOOT = ["shard", "torch"];
 
+/**
+ * Creature cards. You strike the creature card. The creature fights with its deck.
+ * @typedef {{
+ *   id: string,
+ *   name: string,
+ *   tags: string[],
+ *   health: number,
+ *   coin: number,
+ *   deck: string[],
+ * }} Creature
+ */
+
+/** @type {Record<string, Creature>} */
+export const CREATURES = {
+  wolf: {
+    id: "wolf",
+    name: "Wolf",
+    tags: ["beast"],
+    health: 6,
+    coin: 2,
+    deck: ["fang", "fang"],
+  },
+  slime: {
+    id: "slime",
+    name: "Slime",
+    tags: ["acid"],
+    health: 5,
+    coin: 1,
+    deck: ["spit", "spit"],
+  },
+};
+
 /** @param {string} id */
 export function cardById(id) {
   const card = CARDS[id];
@@ -90,9 +160,33 @@ export function cardById(id) {
   return card;
 }
 
+/** @param {string} id */
+export function creatureById(id) {
+  const creature = CREATURES[id];
+  if (!creature) throw new Error(`Unknown creature ${id}`);
+  return creature;
+}
+
+/** @param {string} id */
+export function canUseInField(id) {
+  return id === "bread";
+}
+
 /** @param {string[]} deck */
 export function deckWeight(deck) {
   return deck.reduce((sum, id) => sum + cardById(id).weight, 0);
+}
+
+/**
+ * @param {{ deck: string[], deckIndex: number }} game
+ */
+export function clampDeckIndex(game) {
+  if (game.deck.length === 0) {
+    game.deckIndex = 0;
+    return;
+  }
+  if (game.deckIndex >= game.deck.length) game.deckIndex = game.deck.length - 1;
+  if (game.deckIndex < 0) game.deckIndex = 0;
 }
 
 /**
@@ -136,6 +230,27 @@ export function buyCard(game, index) {
 }
 
 /**
+ * Eat trail bread. Other cards do nothing out of a fight yet.
+ * @param {{ health: number, healthMax: number, deck: string[], deckIndex: number }} game
+ * @param {number} index
+ * @returns {{ ok: boolean, message: string }}
+ */
+export function useFieldCard(game, index) {
+  if (index < 0 || index >= game.deck.length) {
+    return { ok: false, message: "No such card." };
+  }
+  const id = game.deck[index];
+  if (!id) return { ok: false, message: "No such card." };
+  if (!canUseInField(id)) return { ok: false, message: "Nothing to do with that out here." };
+  if (game.health >= game.healthMax) return { ok: false, message: "You are already well." };
+  const gain = Math.min(4, game.healthMax - game.health);
+  game.health += gain;
+  game.deck.splice(index, 1);
+  clampDeckIndex(game);
+  return { ok: true, message: `You eat the bread and gain ${gain} health.` };
+}
+
+/**
  * Take the next loose card in the ruin. The pile does not refill.
  * @param {{ deck: string[], deckIndex: number, ruinLoot: string[] }} game
  * @returns {{ ok: boolean, message: string }}
@@ -174,14 +289,4 @@ export function castIntoRuin(game, index, rng = Math.random) {
     }
   }
   return { ok: true, message: `${lost.name} is gone. The crack stays shut.` };
-}
-
-/** @param {{ deck: string[], deckIndex: number }} game */
-function clampDeckIndex(game) {
-  if (game.deck.length === 0) {
-    game.deckIndex = 0;
-    return;
-  }
-  if (game.deckIndex >= game.deck.length) game.deckIndex = game.deck.length - 1;
-  if (game.deckIndex < 0) game.deckIndex = 0;
 }

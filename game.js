@@ -1,16 +1,40 @@
-import { STARTING_DECK, STARTING_LOOT, STARTING_PURSE, STARTING_STOCK } from "./cards.js";
+import { PLAYER, STARTING_DECK, STARTING_LOOT, STARTING_PURSE, STARTING_STOCK } from "./cards.js";
 
 export const TILES = {
   empty: "  .  ",
   player: "  P  ",
   village: "  V  ",
   ruin: "  R  ",
+  slime: "  S  ",
 };
 
 export const ZONE_SIZE = 25;
 
 /** @typedef {"n" | "e" | "s" | "w"} Dir */
-/** @typedef {"map" | "menu" | "deck" | "settings" | "trade" | "ruin"} Screen */
+/** @typedef {"map" | "menu" | "deck" | "settings" | "trade" | "ruin" | "you" | "fight"} Screen */
+
+/**
+ * @typedef {{
+ *   creatureId: string,
+ *   name: string,
+ *   health: number,
+ *   healthMax: number,
+ *   deck: string[],
+ *   phase: "choose" | "exchange" | "won" | "lost",
+ *   log: string[],
+ *   random: boolean,
+ * }} Fight
+ */
+
+/**
+ * @typedef {{
+ *   kind: "slime",
+ *   symbol: string,
+ *   x: number,
+ *   y: number,
+ *   alive: boolean,
+ * }} Monster
+ */
 
 /**
  * @typedef {{
@@ -22,12 +46,18 @@ export const ZONE_SIZE = 25;
  *   player: { kind: "player", symbol: string, x: number, y: number },
  *   village: { kind: "village", symbol: string, x: number, y: number },
  *   ruin: { kind: "ruin", symbol: string, x: number, y: number },
+ *   monsters: Monster[],
  *   turns: number,
  *   purse: number,
+ *   health: number,
+ *   healthMax: number,
+ *   biome: "plains",
+ *   lastEncounterTurn: number,
  *   deck: string[],
  *   deckIndex: number,
  *   villageStock: string[],
  *   ruinLoot: string[],
+ *   fight: Fight | null,
  *   message: string,
  * }} Game
  */
@@ -48,6 +78,8 @@ export function createGame() {
   const village = { kind: "village", symbol: TILES.village, x: 12, y: 14 };
   /** @type {Game["ruin"]} */
   const ruin = { kind: "ruin", symbol: TILES.ruin, x: 4, y: 3 };
+  /** @type {Monster} */
+  const slime = { kind: "slime", symbol: TILES.slime, x: 6, y: 6, alive: true };
 
   /** @type {string[][]} */
   const zone = [];
@@ -59,9 +91,11 @@ export function createGame() {
   }
   const villageRow = zone[village.y];
   const ruinRow = zone[ruin.y];
-  if (!villageRow || !ruinRow) throw new Error("Zone too small for landmarks");
+  const slimeRow = zone[slime.y];
+  if (!villageRow || !ruinRow || !slimeRow) throw new Error("Zone too small for landmarks");
   villageRow[village.x] = village.symbol;
   ruinRow[ruin.x] = ruin.symbol;
+  slimeRow[slime.x] = slime.symbol;
 
   return {
     phase: "travel",
@@ -72,12 +106,18 @@ export function createGame() {
     player,
     village,
     ruin,
+    monsters: [slime],
     turns: 0,
     purse: STARTING_PURSE,
+    health: PLAYER.healthMax,
+    healthMax: PLAYER.healthMax,
+    biome: "plains",
+    lastEncounterTurn: -1,
     deck: [...STARTING_DECK],
     deckIndex: 0,
     villageStock: [...STARTING_STOCK],
     ruinLoot: [...STARTING_LOOT],
+    fight: null,
     message: "",
   };
 }
@@ -134,5 +174,6 @@ export function travel(game, dir) {
 export function groundName(symbol) {
   if (symbol === TILES.village) return "Village";
   if (symbol === TILES.ruin) return "Ruin";
+  if (symbol === TILES.slime) return "Slime";
   return "Open ground";
 }
