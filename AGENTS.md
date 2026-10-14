@@ -26,7 +26,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 ## Task list (do these roughly in order)
 
 1. **Lay out `app.js`.** Split it into clear sections (or a few plain script files loaded by `index.html`): game state, map and zone data, card data and deck logic, rendering, and input (swipe and arrow keys). Behaviour must stay the same. Describe the layout in this guide when done.
-2. **Settings menu.** An ASCII settings menu reachable from the map. First setting: toggle on-screen ASCII arrow buttons (north, west, south, east) on the map, as an alternative to swiping; each tap moves one square, same as a swipe or arrow key. Remember settings between visits (e.g. `localStorage`). Document controls and settings in `NOTES.md`.
+2. **Settings menu.** An ASCII settings menu reachable from the map (see task 10, the game menu, for where it lives). Movement inputs are two separate toggles: on-screen ASCII arrow buttons (north, west, south, east; each tap moves one square, same as a swipe or arrow key) and swipe controls. Either or both can be on, but never both off, because then you could not move. One way: grey out the remaining toggle so it cannot be switched off while it is the only one on. Remember settings between visits (`localStorage`). Document controls and settings in `NOTES.md`.
 3. **Card system.** Card data model, player deck, and an ASCII deck view reachable from the map. Write the card rules into `NOTES.md`.
 4. **Village trading menu.** Stepping onto `V` opens an ASCII trading screen using card `value`.
 5. **Ruin exploration menu.** Stepping onto `R` opens an ASCII exploration screen where cards can be found or lost.
@@ -34,6 +34,23 @@ Everything a character or monster has or can do is a card. That includes items, 
 7. **Future: portrait and landscape layouts.** Support both orientations and adapt the layout when the phone rotates, similar to how YouTube switches between portrait and full-screen landscape. Until then, design for portrait first.
 8. **Sound effects for the current controls.** Synthesize simple sound effects for swipes and other interactions using the Web Audio API: pure synthesized tones, like a triangle or square wave with a quick decay. No audio files.
 9. **Some sort of library for future sound effects.** A reusable sound module so sounds can be shared and new sound effects added later without duplicating code.
+10. **A game menu.** We do need a menu: somewhere to put the settings (task 2), including the movement controls toggles.
+11. **Inn at the village, and saving.** An inn at the village where you spend money to replenish health. It is also a save point: if you die, you end up back at the inn with everything you had when you were last there. This started as death insurance, but make it a real full save if feasible. Save with the browser's `localStorage` (no cookies, no consent pop-up). What is saved:
+    - **Player:** basically a single small array or object. Which cards are in your inventory (card IDs only; card values and stats are baked into the game engine and are not saved), your health, and your coordinates.
+    - **World:** the location of any known monsters, and the locations of the villages and ruins in that save file.
+12. **Cards.** It is an adventure card game without any cards, so add them: the card data itself, building on task 3's card system. Do this before task 13.
+13. **Display cards as ASCII art.** Every card gets a simple ASCII illustration and a nice border. The art is not stored in the card data; it is part of the display function. Layout, inside the frame from top to bottom: the card name just above the picture, the picture, then text below the picture describing how the card functions. Start with an art area of 5 rows of 21 ASCII characters. Those dimensions may not be perfect once the frame, name, and function text are included, so adjust as needed.
+14. **Card tags.** Cards have tags, like `attack` and `metal`. Interaction rules can key off tags. Example: slimes have the `acid` tag, and if you hit anything acid with a metal card, the acid dissolves it, so using a metal weapon on a slime is a bad trade.
+15. **Creature cards.** Creatures have their own creature card, and you attack the creature card rather than the creature directly. (Whether creatures themselves can have tags is not decided.)
+16. **Player card.** The player has their own player card holding their stats, such as health and deck size.
+17. **Monsters and combat.** We need combat, and to have combat we need monsters. Add monsters, creating their cards with the existing card rules (tasks 3 and 12). Starter monsters: a wolf and a slime.
+18. **Random encounters.** Whenever you swipe to move, there is a chance of a random encounter, depending on the region:
+    - Each 25×25 map has one biome for the whole map. (Per-square biomes may come later; for now use the map's biome.)
+    - The starting area is always a plains biome, no matter what.
+    - In plains, a random encounter can be a wolf.
+    - Chance: 1 in 10 per swipe. This is a rough starting figure: not so often that an injured player can't make it back to the village, not so rare you never meet one.
+    - Cooldown: in the overworld, you can't get a random encounter within five turns of the previous one. This applies only to overworld random encounters; in dungeons such as the ruins there is no cooldown.
+    - Monsters are cards made with the existing card rules (tasks 12 and 17).
 
 ## Version control
 
