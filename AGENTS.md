@@ -8,7 +8,7 @@ An ASCII adventure card game for a phone. Today only the travel phase exists: on
 
 ### Hard rules
 
-- **Pure ASCII.** It is a stylistic choice. Everything on screen, including the map, menus, and cards, is drawn with ASCII characters. No images, emoji, icon fonts, or canvas art.
+- **Pure ASCII.** It is a stylistic choice. Everything on screen, including the map, menus, buttons, and cards, is drawn with ASCII characters. No images, emoji, icon fonts, or canvas art.
 - **Plain static site.** `index.html`, `styles.css`, `app.js`. No npm, no build step, no frameworks, no `gh-pages` branch.
 - **`NOTES.md` is the rulebook.** Any change to game rules or behaviour updates `NOTES.md` in the same commit. If the code and `NOTES.md` disagree, that is a bug; fix one so they match.
 
@@ -26,11 +26,12 @@ Everything a character or monster has or can do is a card. That includes items, 
 ## Task list (do these roughly in order)
 
 1. **Lay out `app.js`.** Split it into clear sections (or a few plain script files loaded by `index.html`): game state, map and zone data, card data and deck logic, rendering, and input (swipe and arrow keys). Behaviour must stay the same. Describe the layout in this guide when done.
-2. **Card system.** Card data model, player deck, and an ASCII deck view reachable from the map. Write the card rules into `NOTES.md`.
-3. **Village trading menu.** Stepping onto `V` opens an ASCII trading screen using card `value`.
-4. **Ruin exploration menu.** Stepping onto `R` opens an ASCII exploration screen where cards can be found or lost.
-5. **Monsters.** Monsters with their own decks, and combat using combat cards.
-6. **Future: portrait and landscape layouts.** Support both orientations and adapt the layout when the phone rotates, similar to how YouTube switches between portrait and full-screen landscape. Until then, design for portrait first.
+2. **Settings menu.** An ASCII settings menu reachable from the map. First setting: toggle on-screen ASCII arrow buttons (north, west, south, east) on the map, as an alternative to swiping; each tap moves one square, same as a swipe or arrow key. Remember settings between visits (e.g. `localStorage`). Document controls and settings in `NOTES.md`.
+3. **Card system.** Card data model, player deck, and an ASCII deck view reachable from the map. Write the card rules into `NOTES.md`.
+4. **Village trading menu.** Stepping onto `V` opens an ASCII trading screen using card `value`.
+5. **Ruin exploration menu.** Stepping onto `R` opens an ASCII exploration screen where cards can be found or lost.
+6. **Monsters.** Monsters with their own decks, and combat using combat cards.
+7. **Future: portrait and landscape layouts.** Support both orientations and adapt the layout when the phone rotates, similar to how YouTube switches between portrait and full-screen landscape. Until then, design for portrait first.
 
 ## Version control
 
@@ -42,7 +43,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 
 ## Before you push
 
-Serve the folder locally (e.g. `python3 -m http.server`) and check on a phone-sized portrait screen: the map draws with aligned columns, swipes and arrow keys move one square, the page does not scroll while swiping, and any menu you touched works.
+Serve the folder locally (e.g. `python3 -m http.server`) and check on a phone-sized portrait screen: the map draws with aligned columns, swipes, arrow keys, and on-screen arrow buttons (when enabled) move one square, the page does not scroll while swiping, and any menu you touched works.
 
 ## Phone list (all nyanpiggle projects)
 
