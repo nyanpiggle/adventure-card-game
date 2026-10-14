@@ -10,21 +10,21 @@ An ASCII adventure card game for a phone. Travel is one 25×25 zone you move aro
 
 Plain scripts, loaded by `index.html` through `app.js`. No build step.
 
-- `game.js` — zone, coordinates, travel
-- `cards.js` — card definitions, tags, coin, trade, ruin pile, creature cards
-- `combat.js` — fights, random encounters, going down
-- `art.js` — ASCII pictures and card text wrapping (not stored on the card)
-- `settings.js` — movement toggles and `localStorage`
-- `direction.js` — swipes and arrow keys
-- `render.js` — map and card drawing
-- `mount.js` — screens and input
-- `app.js` — starts the game on `#app`
-- `styles.css` — colour
-- `NOTES.md` — rules
+- `game.js` - zone, coordinates, travel
+- `cards.js` - card definitions, tags, coin, trade, ruin pile, creature cards
+- `combat.js` - fights, random encounters, going down
+- `art.js` - ASCII pictures and card text wrapping (not stored on the card)
+- `settings.js` - movement toggles and `localStorage`
+- `direction.js` - swipes and arrow keys
+- `render.js` - map and card drawing
+- `mount.js` - screens and input
+- `app.js` - starts the game on `#app`
+- `styles.css` - colour
+- `NOTES.md` - rules
 
 ### Hard rules
 
-- **Pure ASCII.** It is a stylistic choice. Everything on screen, including the map, menus, buttons, and cards, is drawn with ASCII characters. No images, emoji, icon fonts, or canvas art. Coloured ASCII (see task 2) is fine.
+- **Pure ASCII.** It is a stylistic choice. Everything on screen, including the map, menus, buttons, and cards, is drawn with ASCII characters. No images, emoji, icon fonts, or canvas art. Coloured ASCII (see task 2) is fine. One deliberate exception: the `×` corners of the map's compass border are the user's choice. Keep them; do not replace them.
 - **Plain static site.** `index.html`, `styles.css`, `app.js`. No npm, no build step, no frameworks, no `gh-pages` branch.
 - **`NOTES.md` is the rulebook.** Any change to game rules or behaviour updates `NOTES.md` in the same commit. If the code and `NOTES.md` disagree, that is a bug; fix one so they match.
 
@@ -42,8 +42,20 @@ Everything a character or monster has or can do is a card. That includes items, 
 ## Task list (do these roughly in order)
 
 1. **Done. Lay out the scripts.** See "Code layout" above. Behaviour of travel is unchanged: one square, cardinal only, player drawn on top of the ground.
-2. **Done. Colour.** White, orange, green, red, yellow, and blue, mapped in `styles.css`. See `NOTES.md`.
-3. **Done. Settings menu.** Reached from the game menu. On-screen arrows and swipe are separate toggles. One of them must stay on. Remembered in `localStorage`. Documented in `NOTES.md`.
+2. **Done. Colour.** White, orange, green, red, yellow, and blue, mapped in `styles.css`. See `NOTES.md`. The reference below is kept for any further colour work (for example the time-of-day shading in task 21).
+
+   Reference only (not required implementation): the old Pydroid Python Rubik's cube solver (`rubiks-cube-solver` commit `cef84f3`, `cube.py` lines 9-15, April 2025) used these terminal codes. This game is JavaScript in a browser, so treat them as a guide for which colours to aim for, not as codes to paste in:
+
+   - White: `\033[97m`
+   - Orange: `\033[38;5;208m` (256-colour)
+   - Green: `\033[92m`
+   - Red: `\033[91m`
+   - Yellow: `\033[93m`
+   - Blue: `\033[94m`
+   - Reset: `\033[0m`
+
+   That project's `utils.py` (`display_coloured_row`) printed each square as `f"{colour}[]{RESET}"`, resetting after every square.
+3. **Done. Settings menu.** An ASCII settings menu, reached from the game menu (task 11). Movement inputs are two separate toggles: on-screen ASCII arrow buttons (north, west, south, east; each tap moves one square, same as a swipe or arrow key) and swipe controls. Either or both can be on, but never both off, because then you could not move. The remaining toggle is greyed out so it cannot be switched off while it is the only one on. Settings are remembered between visits (`localStorage`). Controls and settings are documented in `NOTES.md`.
 4. **Done. Card system.** Card data, the player deck, and an ASCII deck view from the menu. Rules are in `NOTES.md`.
 5. **Done. Village trading menu.** Stepping onto `V` opens it. Buy and sell by `value`. A swap is a sell and then a buy.
 6. **Done. Ruin exploration menu.** Stepping onto `R` opens it. Sift to find a card. Cast a card in to lose it, sometimes getting one back.
@@ -55,7 +67,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 12. **Inn at the village, and saving.** An inn at the village where you spend money to replenish health. It is also a save point: if you die, you end up back at the inn with everything you had when you were last there. This started as death insurance, but make it a real full save if feasible. Save with the browser's `localStorage` (no cookies, no consent pop-up). What is saved:
     - **Player:** basically a single small array or object. Which cards are in your inventory (card IDs only; card values and stats are baked into the game engine and are not saved), your health, and your coordinates.
     - **World:** the location of any known monsters, and the locations of the villages and ruins in that save file.
-13. **Done. Cards.** The starter set is in `cards.js` and `NOTES.md`. Do this before task 14. It is done.
+13. **Done. Cards.** The starter set of card data is in `cards.js` and listed in `NOTES.md`. New cards go there too.
 14. **Done. Display cards as ASCII art.** Name, a 5×21 picture, then the function text, inside a border. The picture is drawn by `art.js`, not stored on the card.
 15. **Done. Card tags.** Cards have tags, like `attack` and `metal`. A metal card used on an acid creature is destroyed and deals no harm.
 16. **Done. Creature cards.** The wolf and the slime each have a creature card. You attack that card. Their decks are separate.
@@ -64,6 +76,12 @@ Everything a character or monster has or can do is a card. That includes items, 
 19. **Done. Random encounters.** Plains, wolf only, 1 in 10 on a move onto open ground, and not again until five moves have passed. The slime is a map marker, not a random encounter.
 20. **Random dungeon generator for the ruins.** When you enter a ruin, it takes you straight into a dungeon map. The important part is that the ruins are a randomly generated map rather than a big open area. Give it corridors of random lengths (around three to ten is a starting idea; do not focus too much on exact corridor size) and random rooms of random sizes. Enemies appear in those rooms as markers on the map, just like the village and the ruin do on the overworld, but with different symbols: the first letter of the monster's name.
 21. **Time system.** Turn-based, not real time. Time is an abstract number (not hours) on a scale of at most 100. Good candidate scales are 100 and 36; leave the final choice open for now. Ideally the scale has a lot of different factors. Moving to a new square advances time by one. Other actions can advance it too — for example, sleeping at the inn moves time forward by 30. The map's colours shift with time of day: brighter and more vibrant in daytime, darker and more desaturated at night (ties into task 2). Random encounter probabilities can also vary by time of day (ties into task 19).
+22. **Bug fixes from review.**
+    - **Village keyboard bug.** In `mount.js` `onKey`, the trade branch picks a buy letter with `event.key.toLowerCase().charCodeAt(0) - 97`, so named keys like `ArrowUp`, `Enter`, `Escape`, and `Shift` count as letters and open buy prompts. Only accept single-character keys (`event.key.length === 1`). The same pattern is in `onFightKey` when choosing a spoil after a win; fix it there too.
+    - **Non-ASCII `·` in the status line.** `placeLine` and the deck info line in `mount.js` use `·` as a separator. Replace it with an ASCII character (for example `|` or `-`).
+    - **Selling by keyboard stops at 9 cards.** The trade screen uses single digits, so cards 10 and up cannot be sold from the keyboard. Give them a way (paging, or another key scheme).
+    - **Redundant ternary in `draw()`.** `game.screen === "map" ? game.message || placeLine() : game.message || placeLine()` has identical branches; simplify it.
+    - **Cut-off rules text.** `renderCard` in `render.js` keeps only 4 lines of rules text (`.slice(0, 4)`) with no sign that text was cut. Show an indicator (for example ending the last line with `...`) when it is truncated.
 
 ## Version control
 
