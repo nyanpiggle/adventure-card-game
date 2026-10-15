@@ -207,6 +207,7 @@ export function mount(root) {
   /** @param {number} before */
   function noteDay(before) {
     if (dayOf(game.clock) === dayOf(before)) return;
+    play("bell");
     const bit = "A new day. The village sets out fresh goods.";
     game.message = game.message ? `${game.message} ${bit}` : bit;
   }
@@ -390,8 +391,10 @@ export function mount(root) {
   }
 
   function rest() {
+    const before = dayOf(game.clock);
     const result = restAtInn(game);
     game.message = result.message;
+    if (result.ok && dayOf(game.clock) !== before) play("bell");
     play(result.ok ? "rest" : "bump");
     draw();
   }

@@ -114,7 +114,7 @@ Named keys such as `ArrowUp`, `Enter`, and `Shift` are never treated as letters.
 
 ## Sound
 
-Tones are synthesized in the browser. There are no audio files. `sound.js` is the only place that makes them, so later effects are added there. The first tap or key unlocks sound. A step, a blocked step, opening the menu, coin changing hands, a strike, casting a card into the ruin, and going down each have a short tone.
+Tones are synthesized in the browser. There are no audio files. `sound.js` is the only place that makes them, so later effects are added there. The first tap or key unlocks sound. A step, a blocked step, opening the menu, coin changing hands, a strike, casting a card into the ruin, waiting, a bell when the day turns, and going down each have a short tone.
 
 ## Cards
 
@@ -145,7 +145,7 @@ The deck screen has a craft line. The one recipe is Ashen Shard plus Walking Sta
 
 ## Player card
 
-You have a player card. It is not in the deck. It shows your health and how many cards you are carrying. Maximum health is 8.
+You have a player card. It is not in the deck. It shows your health, how many cards you are carrying, and the day and watch. Maximum health is 8.
 
 ## Creature cards
 

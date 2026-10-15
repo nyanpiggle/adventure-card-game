@@ -3,6 +3,7 @@ import { cardById, creatureById, PLAYER } from "./cards.js";
 import { hpBar } from "./combat.js";
 import { DUNGEON, dungeonGlyph } from "./dungeon.js";
 import { TILES, ZONE_SIZE, glyphAt, tileAt } from "./game.js";
+import { clockLabel } from "./time.js";
 
 /**
  * @param {string} className
@@ -221,6 +222,7 @@ export function renderPlayer(parent, game) {
     ...wrapText(PLAYER.text, ART_W).map((text) => ({ text: fitCell(text), cls: "c-dim" })),
     { text: fitCell(`HP ${hpBar(game.health, game.healthMax)}`), cls: "c-green" },
     { text: fitCell(`${game.health} / ${game.healthMax}    Deck ${game.deck.length}`), cls: "c-yellow" },
+    { text: fitCell(clockLabel(game.clock)), cls: "c-orange" },
   ];
   pre.append(span("c-dim", rule), document.createTextNode("\n"));
   for (const row of rows) {
