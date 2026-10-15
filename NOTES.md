@@ -104,6 +104,8 @@ Movement inputs are two separate toggles, remembered in `localStorage` under `ad
 
 Either or both can be on. Both cannot be off. The last one left on is locked, so it cannot be switched off.
 
+Portrait stacks the map above the arrows. On a wide landscape screen the map stays on the left and the arrows sit on the right. A menu still uses the full width.
+
 Named keys such as `ArrowUp`, `Enter`, and `Shift` are never treated as letters. A buy or a spoil pick only accepts a single character (`a` to `z`).
 
 ## Sound

@@ -272,3 +272,40 @@ body {
   letter-spacing: 0.02em;
   text-align: center;
 }
+
+@media (orientation: landscape) and (min-width: 700px) {
+  .game-root {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 17rem;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    padding: 0.45rem 0.6rem calc(0.45rem + env(safe-area-inset-bottom));
+  }
+
+  .game-root header {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .game-root .stage {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .game-root:has(.pad[hidden]) .stage {
+    grid-column: 1 / -1;
+  }
+
+  .game-root .pad {
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: 0;
+    justify-content: center;
+    overflow: auto;
+  }
+
+  .game-root .hint {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+}

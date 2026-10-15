@@ -64,7 +64,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 5. **Done. Village trading menu.** Stepping onto `V` opens it. Buy and sell by `value`. A swap is a sell and then a buy.
 6. **Done. Ruin exploration menu.** Stepping onto `R` opens it. Sift to find a card. Cast a card in to lose it, sometimes getting one back.
 7. **Done. Monsters.** Wolf and slime, each with a deck. Combat uses combat cards. Rules are in `NOTES.md`.
-8. **Future: portrait and landscape layouts.** Support both orientations and adapt the layout when the phone rotates, similar to how YouTube switches between portrait and full-screen landscape. Until then, design for portrait first.
+8. **Done. Portrait and landscape layouts.** Portrait stacks the map over the arrows. A wide landscape screen puts the map on the left and the arrows on the right. Menus use the full width.
 9. **Done. Sound effects for the current controls.** Synthesize simple sound effects for swipes and other interactions using the Web Audio API: pure synthesized tones, like a triangle or square wave with a quick decay. No audio files.
 10. **Done. Some sort of library for future sound effects.** A reusable sound module so sounds can be shared and new sound effects added later without duplicating code. See `sound.js`.
 11. **Done. A game menu.** `[ Menu ]` or the `M` key. It holds the deck and the settings.
