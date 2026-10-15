@@ -1,5 +1,7 @@
 /** A day is 60 watches. 60 has many factors, and it stays under 100. */
 
+import { STARTING_STOCK } from "./cards.js";
+
 export const DAY = 60;
 
 /** A bed at the inn. */
@@ -45,13 +47,15 @@ export function wolfChance(clock) {
 }
 
 /**
- * Move the watch forward. Does not touch the village. That is a later rule.
- * @param {{ clock: number }} game
+ * Move the watch forward. A new day puts the village stock back.
+ * @param {{ clock: number, villageStock: string[] }} game
  * @param {number} amount
  * @returns {boolean} true when a new day started
  */
 export function advanceTime(game, amount) {
   const before = dayOf(game.clock);
   game.clock += amount;
-  return dayOf(game.clock) > before;
+  if (dayOf(game.clock) <= before) return false;
+  game.villageStock = [...STARTING_STOCK];
+  return true;
 }

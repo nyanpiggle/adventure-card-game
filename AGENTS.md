@@ -78,7 +78,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 19. **Done. Random encounters.** Plains, wolf only, 1 in 10 on a move onto open ground, and not again until five moves have passed. The slime is a map marker, not a random encounter.
 20. **Done. Random dungeon generator for the ruins.** Stepping on `R` enters a generated ruin: rooms joined by corridors of length 3 to 10. Wolves and slimes are room markers, `W` and `S`. `<` climbs out. `*` is the old rubble pile. The layout is kept, and the inn saves it.
 21. **Done. Time system.** A day is 60 watches (`time.js`). Moves and ruin steps advance it by 1. Sleep advances it by 30. Dawn, day, dusk, and night recolour the map. Wolf odds are 1 in 10, 1 in 8, and 1 in 5. The watch is saved.
-22. **Village daily trade reset.** Village trades reset every in-game day, using the established in-game time counter.
+22. **Done. Village daily trade reset.** When the watch crosses into a new day, `villageStock` is replaced by the starting list. Sold cards from yesterday are gone.
 23. **Done. Bug fixes from review.**
     - **Village keyboard bug.** In `mount.js` `onKey`, the trade branch picks a buy letter with `event.key.toLowerCase().charCodeAt(0) - 97`, so named keys like `ArrowUp`, `Enter`, `Escape`, and `Shift` count as letters and open buy prompts. Only accept single-character keys (`event.key.length === 1`). The same pattern is in `onFightKey` when choosing a spoil after a win; fix it there too.
     - **Non-ASCII `·` in the status line.** `placeLine` and the deck info line in `mount.js` use `·` as a separator. Replace it with an ASCII character (for example `|` or `-`).

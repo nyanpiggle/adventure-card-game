@@ -230,7 +230,7 @@ export function restAtInn(game) {
   game.health = game.healthMax;
   const newDay = advanceTime(game, SLEEP);
   const when = clockLabel(game.clock);
-  const dayBit = newDay ? "A new day. " : "";
+  const dayBit = newDay ? "A new day. The village sets out fresh goods. " : "";
   if (!storeSave(game)) {
     return { ok: true, message: `${dayBit}You sleep and wake well. It is ${when}. This phone will not keep the memory.` };
   }

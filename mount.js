@@ -198,7 +198,7 @@ export function mount(root) {
   /** @param {number} before */
   function noteDay(before) {
     if (dayOf(game.clock) === dayOf(before)) return;
-    const bit = "A new day.";
+    const bit = "A new day. The village sets out fresh goods.";
     game.message = game.message ? `${game.message} ${bit}` : bit;
   }
 

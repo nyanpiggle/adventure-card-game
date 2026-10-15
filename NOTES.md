@@ -89,7 +89,7 @@ The day is four watches of 15:
 | Dusk | 30 to 44 | dimmer |
 | Night | 45 to 59 | darker and flatter |
 
-A move on the plains or in the ruin advances the watch by one. Sleeping at the inn advances it by 30. When the count crosses 60, it is a new day and the status says so.
+A move on the plains or in the ruin advances the watch by one. Sleeping at the inn advances it by 30. When the count crosses 60, it is a new day. The status says so, and the village sets out fresh goods.
 
 Wolves on open ground still need five moves since the last one. The chance depends on the watch: 1 in 10 by day, 1 in 8 at dawn and dusk, and 1 in 5 at night.
 
@@ -200,6 +200,8 @@ The zone is plains. On each move onto open ground, if five moves have passed sin
 Moving onto `V` opens the trading screen. Leave returns you to the map, still standing on the village. Moving onto it again opens the screen again. The inn is reached from this screen.
 
 Buy spends coin equal to the card's value and takes it from the village. Sell adds the card's value to your coin and gives the card to the village. To swap, sell and then buy. Coin covers the difference in value. You cannot buy what you cannot afford.
+
+The village stock returns to Coil of Rope, Pitch Torch, and Copper Charm at the start of each new day. Anything you sold, and anything they had left, is replaced by that list.
 
 Sell keys are `1` to `9` for the nine cards on the current page. When the deck is longer than that, `[` and `]` turn the page. The buttons do the same.
 
