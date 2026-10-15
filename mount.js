@@ -1,4 +1,4 @@
-import { buyCard, canCraft, canUseInField, cardById, castIntoRuin, craftCard, deckWeight, sellCard, sellPayout, siftRuin, useFieldCard } from "./cards.js";
+import { buyCard, canUseInField, cardById, castIntoRuin, craftSlots, deckWeight, isCraftedId, sellCard, sellPayout, siftRuin, uncraftCard, useFieldCard } from "./cards.js";
 import { applyDown, beginFight, claimSpoil, fleeFight, hpBar, playCombatCard, rollEncounter } from "./combat.js";
 import { DUNGEON, dungeonName, foeKind, generateDungeon, moveInDungeon } from "./dungeon.js";
 import { KEYS, directionFromSwipe } from "./direction.js";
@@ -21,6 +21,7 @@ const PHASE = {
   trade: "Village",
   ruin: "Ruin",
   you: "You",
+  craft: "Craft",
   fight: "Fight",
   over: "Over",
   inn: "Inn",
@@ -45,6 +46,10 @@ export function mount(root) {
   let origin = null;
   let sellPage = 0;
   let forgetting = false;
+  /** @type {{ a: number | null, b: number | null, c: number | null }} */
+  let bench = { a: null, b: null, c: null };
+  /** @type {null | "a" | "b" | "c" | "uncraft"} */
+  let craftPick = null;
 
   root.classList.add("game-root");
   root.replaceChildren();
@@ -98,6 +103,12 @@ export function mount(root) {
     if (screen === "menu") play("menu");
     if (screen !== "trade") sellPage = 0;
     forgetting = false;
+    if (screen !== "craft") {
+      craftPick = null;
+      bench = { a: null, b: null, c: null };
+    } else {
+      craftPick = null;
+    }
     game.screen = screen;
     game.message = "";
     clearPending();
@@ -254,10 +265,11 @@ export function mount(root) {
     const remembered = savePresent();
     panel.append(
       button("1  Deck", () => go("deck")),
-      button("2  Settings", () => go("settings")),
+      button("2  Craft", () => go("craft")),
       button("3  You", () => go("you")),
+      button("4  Settings", () => go("settings")),
       button(
-        "4  Clear the save",
+        "5  Clear the save",
         () => {
           if (!savePresent()) {
             game.message = "The inn remembers nothing.";
@@ -310,21 +322,6 @@ export function mount(root) {
         );
       }
     }
-    line(panel, "CRAFT", "c-white");
-    line(panel, "Ashen Shard + Walking Staff = Stone Spear", "c-dim");
-    panel.append(
-      button(
-        "c  Craft",
-        () => {
-          const result = craftCard(game, "spear");
-          game.message = result.message;
-          if (result.ok) passWatch();
-          play(result.ok ? "coin" : "bump");
-          draw();
-        },
-        !canCraft(game.deck, "spear"),
-      ),
-    );
     panel.append(button("0  Back", () => go("menu")));
     stage.append(panel);
   }
@@ -568,9 +565,144 @@ export function mount(root) {
   function drawYou() {
     const panel = panelEl("YOU");
     renderPlayer(panel, game);
-    line(panel, "Plains. Health is on this card, not in the deck.", "c-dim");
     if (game.message) line(panel, game.message, "c-orange");
     panel.append(button("0  Back", () => go("menu")));
+    stage.append(panel);
+  }
+
+  /** @param {"a" | "b" | "c"} except */
+  function benchTaken(except) {
+    /** @type {Set<number>} */
+    const used = new Set();
+    for (const key of /** @type {const} */ (["a", "b", "c"])) {
+      if (key === except) continue;
+      const index = bench[key];
+      if (index != null) used.add(index);
+    }
+    return used;
+  }
+
+  /**
+   * @param {"a" | "b" | "c" | null} except
+   */
+  function freeCards(except) {
+    const used = except ? benchTaken(except) : new Set();
+    return game.deck
+      .map((id, index) => ({ id, index }))
+      .filter((entry) => !used.has(entry.index));
+  }
+
+  /** @param {"a" | "b" | "c"} key */
+  function slotName(key) {
+    const index = bench[key];
+    if (index == null) return "(empty)";
+    const id = game.deck[index];
+    return id ? cardById(id).name : "(empty)";
+  }
+
+  function doCraft() {
+    if (bench.a == null || bench.b == null || bench.c == null) {
+      game.message = "A slot is empty.";
+      play("bump");
+      draw();
+      return;
+    }
+    const result = craftSlots(game, bench.a, bench.b, bench.c);
+    game.message = result.message;
+    if (result.ok) {
+      bench = { a: null, b: null, c: null };
+      passWatch();
+      play("coin");
+    } else {
+      play("bump");
+    }
+    draw();
+  }
+
+  /** @param {HTMLElement} panel @param {"a" | "b" | "c"} key */
+  function drawCraftPick(panel, key) {
+    const choices = freeCards(key);
+    if (choices.length === 0) line(panel, "Nothing left to set.", "c-dim");
+    choices.slice(0, 26).forEach((entry, letter) => {
+      const mark = String.fromCharCode(97 + letter);
+      panel.append(
+        button(`${mark}  ${cardById(entry.id).name}`, () => {
+          bench[key] = entry.index;
+          craftPick = null;
+          game.message = "";
+          draw();
+        }),
+      );
+    });
+    panel.append(button("0  Back", () => {
+      craftPick = null;
+      draw();
+    }));
+    stage.append(panel);
+  }
+
+  /** @param {HTMLElement} panel */
+  function drawUncraft(panel) {
+    const made = game.deck
+      .map((id, index) => ({ id, index }))
+      .filter((entry) => isCraftedId(entry.id));
+    if (made.length === 0) line(panel, "You have nothing crafted.", "c-dim");
+    made.slice(0, 26).forEach((entry, letter) => {
+      const mark = String.fromCharCode(97 + letter);
+      panel.append(
+        button(`${mark}  ${cardById(entry.id).name}`, () => {
+          const result = uncraftCard(game, entry.index);
+          game.message = result.message;
+          bench = { a: null, b: null, c: null };
+          craftPick = null;
+          play(result.ok ? "coin" : "bump");
+          draw();
+        }),
+      );
+    });
+    panel.append(button("0  Back", () => {
+      craftPick = null;
+      draw();
+    }));
+    stage.append(panel);
+  }
+
+  function drawCraft() {
+    const panel = panelEl(craftPick === "uncraft" ? "UNCRAFT" : craftPick ? "CHOOSE" : "CRAFT");
+    if (game.message) line(panel, game.message, "c-orange");
+    if (craftPick === "a" || craftPick === "b" || craftPick === "c") {
+      drawCraftPick(panel, craftPick);
+      return;
+    }
+    if (craftPick === "uncraft") {
+      drawUncraft(panel);
+      return;
+    }
+    line(panel, "Two reagents, and a catalyst. The catalyst comes back.", "c-dim");
+    panel.append(
+      button(`1  Reagent   ${slotName("a")}`, () => {
+        craftPick = "a";
+        game.message = "";
+        draw();
+      }),
+      button(`2  Reagent   ${slotName("b")}`, () => {
+        craftPick = "b";
+        game.message = "";
+        draw();
+      }),
+      button(`3  Catalyst  ${slotName("c")}`, () => {
+        craftPick = "c";
+        game.message = "";
+        draw();
+      }),
+      button("4  Craft", () => doCraft()),
+      button("5  Uncraft", () => {
+        craftPick = "uncraft";
+        game.message = "";
+        draw();
+      }),
+      button("0  Back", () => go("menu")),
+    );
     stage.append(panel);
   }
 
@@ -697,12 +829,19 @@ export function mount(root) {
     }
     if (game.screen === "menu") hint.textContent = forgetting
       ? "Yes forgets the inn and starts the zone over."
-      : "Deck, you, settings, or clear the save.";
+      : "Deck, craft, you, settings, or clear the save.";
     else if (game.screen === "deck") hint.textContent = "Trail bread can be used from here.";
+    else if (game.screen === "craft") {
+      hint.textContent = craftPick === "uncraft"
+        ? "A made card comes apart into its reagents."
+        : craftPick
+          ? "Choose a card from the deck."
+          : "The catalyst is not used up.";
+    }
     else if (game.screen === "settings") hint.textContent = "Remembered on this phone.";
     else if (game.screen === "trade") hint.textContent = "Leave when you are done. The inn keeps a bed.";
     else if (game.screen === "inn") hint.textContent = "A bed is 2 coin. Resting is the save.";
-    else if (game.screen === "you") hint.textContent = "This card is you. The deck is what you carry.";
+    else if (game.screen === "you") hint.textContent = "This card is you.";
     else if (game.screen === "fight") hint.textContent = "Strike the creature card, or flee and take one hit.";
     else if (game.screen === "ruin" && game.layer === "dungeon") hint.textContent = "Sift or cast, then leave. You are still in the ruin.";
     else if (game.screen === "over") hint.textContent = "The trip is over. Nothing was saved.";
@@ -728,6 +867,7 @@ export function mount(root) {
     if (onGround) drawMap();
     else if (game.screen === "menu") drawMenu();
     else if (game.screen === "deck") drawDeck();
+    else if (game.screen === "craft") drawCraft();
     else if (game.screen === "settings") drawSettings();
     else if (game.screen === "trade") drawTrade();
     else if (game.screen === "inn") drawInn();
@@ -841,7 +981,13 @@ export function mount(root) {
         draw();
         return;
       }
-      if (game.screen === "deck" || game.screen === "settings" || game.screen === "you") go("menu");
+      if (game.screen === "craft" && craftPick) {
+        craftPick = null;
+        game.message = "";
+        draw();
+        return;
+      }
+      if (game.screen === "deck" || game.screen === "settings" || game.screen === "you" || game.screen === "craft") go("menu");
       else if (game.screen === "inn") go("trade");
       else if ((game.screen === "menu" || game.screen === "ruin") && game.layer === "dungeon") go("dungeon");
       else go("map");
@@ -859,9 +1005,10 @@ export function mount(root) {
         return;
       }
       if (event.key === "1") go("deck");
-      else if (event.key === "2") go("settings");
+      else if (event.key === "2") go("craft");
       else if (event.key === "3") go("you");
-      else if (event.key === "4") {
+      else if (event.key === "4") go("settings");
+      else if (event.key === "5") {
         if (!savePresent()) {
           game.message = "The inn remembers nothing.";
           draw();
@@ -871,6 +1018,48 @@ export function mount(root) {
         game.message = "";
         draw();
       }
+      return;
+    }
+
+    if (game.screen === "craft") {
+      if (craftPick === "a" || craftPick === "b" || craftPick === "c") {
+        const choices = freeCards(craftPick);
+        const letter = letterIndex(event.key);
+        const choice = letter >= 0 ? choices[letter] : undefined;
+        if (choice) {
+          bench[craftPick] = choice.index;
+          craftPick = null;
+          game.message = "";
+          draw();
+        }
+        return;
+      }
+      if (craftPick === "uncraft") {
+        const made = game.deck
+          .map((id, index) => ({ id, index }))
+          .filter((entry) => isCraftedId(entry.id));
+        const letter = letterIndex(event.key);
+        const choice = letter >= 0 ? made[letter] : undefined;
+        if (choice) {
+          const result = uncraftCard(game, choice.index);
+          game.message = result.message;
+          bench = { a: null, b: null, c: null };
+          craftPick = null;
+          play(result.ok ? "coin" : "bump");
+          draw();
+        }
+        return;
+      }
+      if (event.key === "1") craftPick = "a";
+      else if (event.key === "2") craftPick = "b";
+      else if (event.key === "3") craftPick = "c";
+      else if (event.key === "4") {
+        doCraft();
+        return;
+      } else if (event.key === "5") craftPick = "uncraft";
+      else return;
+      game.message = "";
+      draw();
       return;
     }
 
@@ -895,12 +1084,6 @@ export function mount(root) {
           game.message = useFieldCard(game, game.deckIndex).message;
           draw();
         }
-      } else if (event.key === "c" || event.key === "C") {
-        const result = craftCard(game, "spear");
-        game.message = result.message;
-        if (result.ok) passWatch();
-        play(result.ok ? "coin" : "bump");
-        draw();
       }
       return;
     }

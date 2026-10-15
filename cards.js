@@ -130,7 +130,7 @@ export const PLAYER = {
   id: "you",
   name: "You",
   healthMax: 8,
-  text: "A traveller on the plains. Your health is on this card.",
+  text: "A traveller.",
 };
 
 export const STARTING_PURSE = 4;
@@ -180,41 +180,75 @@ export function cardById(id) {
   return card;
 }
 
-/** @type {{ id: string, parts: string[] }[]} */
-export const RECIPES = [{ id: "spear", parts: ["shard", "staff"] }];
+/**
+ * Two reagents are spent. The catalyst is required and given back.
+ * @type {{ id: string, reagents: [string, string], catalyst: string }[]}
+ */
+export const RECIPES = [{ id: "spear", reagents: ["shard", "staff"], catalyst: "rope" }];
+
+/** @param {string} id */
+export function isCraftedId(id) {
+  return RECIPES.some((recipe) => recipe.id === id);
+}
 
 /**
- * @param {string[]} deck
- * @param {string} recipeId
+ * Reagent order does not matter.
+ * @param {string} reagentA
+ * @param {string} reagentB
+ * @param {string} catalyst
  */
-export function canCraft(deck, recipeId) {
-  const recipe = RECIPES.find((entry) => entry.id === recipeId);
-  if (!recipe) return false;
-  const held = deck.slice();
-  for (const part of recipe.parts) {
-    const index = held.indexOf(part);
-    if (index < 0) return false;
-    held.splice(index, 1);
-  }
-  return true;
+export function findRecipe(reagentA, reagentB, catalyst) {
+  return (
+    RECIPES.find((recipe) => {
+      const pair =
+        (reagentA === recipe.reagents[0] && reagentB === recipe.reagents[1]) ||
+        (reagentA === recipe.reagents[1] && reagentB === recipe.reagents[0]);
+      return pair && catalyst === recipe.catalyst;
+    }) ?? null
+  );
 }
 
 /**
  * @param {{ deck: string[], deckIndex: number }} game
- * @param {string} recipeId
+ * @param {number} indexA
+ * @param {number} indexB
+ * @param {number} indexC
  * @returns {{ ok: boolean, message: string }}
  */
-export function craftCard(game, recipeId) {
-  const recipe = RECIPES.find((entry) => entry.id === recipeId);
-  if (!recipe || !canCraft(game.deck, recipeId)) return { ok: false, message: "You lack a part." };
-  for (const part of recipe.parts) {
-    const index = game.deck.indexOf(part);
-    game.deck.splice(index, 1);
+export function craftSlots(game, indexA, indexB, indexC) {
+  if (indexA === indexB || indexA === indexC || indexB === indexC) {
+    return { ok: false, message: "A slot is empty." };
   }
+  const reagentA = game.deck[indexA];
+  const reagentB = game.deck[indexB];
+  const catalyst = game.deck[indexC];
+  if (!reagentA || !reagentB || !catalyst) return { ok: false, message: "A slot is empty." };
+  const recipe = findRecipe(reagentA, reagentB, catalyst);
+  if (!recipe) return { ok: false, message: "That is not a recipe." };
+  const drop = [indexA, indexB].sort((left, right) => right - left);
+  for (const index of drop) game.deck.splice(index, 1);
   game.deck.push(recipe.id);
   clampDeckIndex(game);
   const made = cardById(recipe.id);
-  return { ok: true, message: `You make a ${made.name}.` };
+  return { ok: true, message: `You make a ${made.name}. The ${cardById(catalyst).name} comes back.` };
+}
+
+/**
+ * A made card comes apart into its two reagents. The catalyst was never spent.
+ * @param {{ deck: string[], deckIndex: number }} game
+ * @param {number} index
+ * @returns {{ ok: boolean, message: string }}
+ */
+export function uncraftCard(game, index) {
+  const id = game.deck[index];
+  if (!id || !isCraftedId(id)) return { ok: false, message: "That was not crafted." };
+  const recipe = RECIPES.find((entry) => entry.id === id);
+  if (!recipe) return { ok: false, message: "That was not crafted." };
+  const name = cardById(id).name;
+  game.deck.splice(index, 1);
+  game.deck.push(recipe.reagents[0], recipe.reagents[1]);
+  clampDeckIndex(game);
+  return { ok: true, message: `${name} comes apart.` };
 }
 
 /** @param {string} id */

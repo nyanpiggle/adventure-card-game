@@ -53,7 +53,7 @@ Each of these has coordinates inside the zone.
 
 The village, ruin, and slime symbols are written into the array at those coordinates. The player is not. A wolf is not on the map. Wolves are random encounters.
 
-The player also starts with 8 health, 4 coin, and three cards: Walking Staff, Trail Bread, Belt Knife. Health and deck size are on the player card, which is not in the deck. Open it from the game menu as You.
+The player also starts with 8 health, 4 coin, and three cards: Walking Staff, Trail Bread, Belt Knife. The player card says "A traveller." Open it from the game menu as You.
 
 ## What you see
 
@@ -95,7 +95,7 @@ Wolves on open ground still need five moves since the last one. The chance depen
 
 From the map or the ruin, `.` or the `[ . ]` button waits one watch. Waiting is not a move. It does not roll a wolf, and it does not count toward the five-move cooldown.
 
-A finished sale, a finished purchase, a sift that finds a card, a cast, and a finished craft each advance the watch by one as well. A failed attempt does not.
+A finished sale, a finished purchase, a sift that finds a card, a cast, and a finished craft each advance the watch by one as well. A failed attempt does not. Uncraft does not.
 
 ## Controls and settings
 
@@ -141,11 +141,21 @@ Trail Bread is the only card you can use from the deck. Using it eats the card a
 
 ## Crafting
 
-The deck screen has a craft line. The one recipe is Ashen Shard plus Walking Staff, which makes a Stone Spear. The spear's harm is 6 and its price is 8, more than either part alone. `c` crafts it when both parts are in the deck. Each part is used up. The button stays locked until you have both.
+Crafting is its own screen, next to the deck on the game menu (`2`). It is not part of the deck.
+
+The bench has two reagent slots and one catalyst slot. Each slot opens the deck so you can set a card into it. A card can only sit in one slot.
+
+`4` tries the three cards against the recipe list. If they are not a recipe, nothing is spent and the bench says "That is not a recipe." An empty slot says "A slot is empty."
+
+The one recipe is Ashen Shard and Walking Staff, with a Coil of Rope as the catalyst. It makes a Stone Spear. The two reagents are spent. The rope comes back. Reagent order does not matter. The spear's harm is 6 and its price is 8, more than either reagent alone.
+
+`5` opens uncraft. It lists made cards you are carrying. Choosing one returns its two reagents. The catalyst was never spent, so it is not given again.
+
+A finished craft still advances the watch by one. Uncraft does not.
 
 ## Player card
 
-You have a player card. It is not in the deck. It shows your health, how many cards you are carrying, and the day and watch. Maximum health is 8.
+You have a player card. It is not in the deck. The card says "A traveller." It also shows your health, how many cards you are carrying, and the day and watch. Maximum health is 8.
 
 ## Creature cards
 
@@ -202,7 +212,7 @@ What is saved:
 
 Opening the page loads that save when there is one. You are on the map, not in a menu.
 
-From the game menu, `4` clears the save. It asks first. Yes starts the zone over from the beginning. Movement settings are a different store and stay. If the inn remembers nothing, the line is locked.
+From the game menu, `5` clears the save. It asks first. Yes starts the zone over from the beginning. Movement settings are a different store and stay. If the inn remembers nothing, the line is locked.
 
 ## Random encounters
 

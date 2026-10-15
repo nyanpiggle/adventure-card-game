@@ -87,7 +87,7 @@ Everything a character or monster has or can do is a card. That includes items, 
     - **Cut-off rules text.** `renderCard` in `render.js` keeps only 4 lines of rules text (`.slice(0, 4)`) with no sign that text was cut. Show an indicator (for example ending the last line with `...`) when it is truncated.
 24. **Done. Card value is not combat damage.** Each card has `damage` as well as `value`. Price climbs faster than harm. The Pitch Torch is worth 5 and hits for 1. Fights use harm. The shop uses price. Torch utility outside a fight is still not decided.
 25. **Done. Rename Ash Shard to Ashen Shard.** The id stays `shard`, so old saves still know the card. It is stone: value 6, damage 1.
-26. **Done. Crafting.** The deck screen has one recipe: Ashen Shard + Walking Staff = Stone Spear (harm 6, value 8). `c` crafts it when both are in the deck.
+26. **Done. Crafting.** Its own menu, beside the deck. Two reagent slots and a catalyst slot. The recipe is Ashen Shard + Walking Staff, catalyst Coil of Rope, result Stone Spear (harm 6, value 8). The rope comes back. A wrong set of cards fails. Uncraft lists made cards and returns the reagents.
 27. **Done. Village trade rules.** The counter sells Trail Bread. Selling pays three quarters of the price, rounded down. A sold card can be bought back at full price until the day turns, which replaces the counter with the starting goods.
 28. **Done. Death costs half your gold.** `applyDown` matches `NOTES.md`: half the coin, rounded up; 0 coin also drops one random card; no coin and no cards is game over, and `1` begins again.
     - **Coin.** Going down (dying) costs half the coin you are carrying, rounded up, instead of a flat 2. For example, 1 coin costs 1, 3 coin costs 2, and 0 coin costs nothing.
@@ -96,7 +96,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 29. **Done. Waiting.** On the map or in the ruin, `.` or `[ . ]` advances the watch by one. It is not a move, so it does not roll a wolf.
 30. **Done. Work takes a watch.** A finished sale, purchase, sift, cast, or craft advances the watch by one. A failed attempt does not.
 31. **Done. The day has a bell.** When the watch crosses into a new day, a bell plays. The player card shows the day and the watch.
-32. **Done. Clear the save.** The game menu can forget the inn. It asks first, then deletes the save and starts the zone over. Settings stay.
+32. **Done. Clear the save.** The game menu (`5`) can forget the inn. It asks first, then deletes the save and starts the zone over. Settings stay.
 
 ## Version control
 
