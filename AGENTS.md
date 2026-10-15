@@ -15,6 +15,7 @@ Plain scripts, loaded by `index.html` through `app.js`. No build step.
 - `combat.js` - fights, random encounters, going down
 - `art.js` - ASCII pictures and card text wrapping (not stored on the card)
 - `settings.js` - movement toggles and `localStorage`
+- `sound.js` - synthesized tones (no audio files)
 - `direction.js` - swipes and arrow keys
 - `render.js` - map and card drawing
 - `mount.js` - screens and input
@@ -61,8 +62,8 @@ Everything a character or monster has or can do is a card. That includes items, 
 6. **Done. Ruin exploration menu.** Stepping onto `R` opens it. Sift to find a card. Cast a card in to lose it, sometimes getting one back.
 7. **Done. Monsters.** Wolf and slime, each with a deck. Combat uses combat cards. Rules are in `NOTES.md`.
 8. **Future: portrait and landscape layouts.** Support both orientations and adapt the layout when the phone rotates, similar to how YouTube switches between portrait and full-screen landscape. Until then, design for portrait first.
-9. **Sound effects for the current controls.** Synthesize simple sound effects for swipes and other interactions using the Web Audio API: pure synthesized tones, like a triangle or square wave with a quick decay. No audio files.
-10. **Some sort of library for future sound effects.** A reusable sound module so sounds can be shared and new sound effects added later without duplicating code.
+9. **Done. Sound effects for the current controls.** Synthesize simple sound effects for swipes and other interactions using the Web Audio API: pure synthesized tones, like a triangle or square wave with a quick decay. No audio files.
+10. **Done. Some sort of library for future sound effects.** A reusable sound module so sounds can be shared and new sound effects added later without duplicating code. See `sound.js`.
 11. **Done. A game menu.** `[ Menu ]` or the `M` key. It holds the deck and the settings.
 12. **Inn at the village, and saving.** An inn at the village where you spend money to replenish health. Resting in the village is part of this task, and it is important. The details of resting are not decided yet. It is also a save point: if you die, you end up back at the inn with everything you had when you were last there. This started as death insurance, but make it a real full save if feasible. Save with the browser's `localStorage` (no cookies, no consent pop-up). What is saved:
     - **Player:** basically a single small array or object. Which cards are in your inventory (card IDs only; card values and stats are baked into the game engine and are not saved), your health, and your coordinates.
@@ -77,7 +78,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 20. **Random dungeon generator for the ruins.** When you enter a ruin, it takes you straight into a dungeon map. The important part is that the ruins are a randomly generated map rather than a big open area. Give it corridors of random lengths (around three to ten is a starting idea; do not focus too much on exact corridor size) and random rooms of random sizes. Enemies appear in those rooms as markers on the map, just like the village and the ruin do on the overworld, but with different symbols: the first letter of the monster's name.
 21. **Time system.** Turn-based, not real time. Time is an abstract number (not hours) on a scale of at most 100. Good candidate scales are 100 and 36; leave the final choice open for now. Ideally the scale has a lot of different factors. Moving to a new square advances time by one. Other actions can advance it too — for example, sleeping at the inn moves time forward by 30. The map's colours shift with time of day: brighter and more vibrant in daytime, darker and more desaturated at night (ties into task 2). Random encounter probabilities can also vary by time of day (ties into task 19).
 22. **Village daily trade reset.** Village trades reset every in-game day, using the established in-game time counter.
-23. **Bug fixes from review.**
+23. **Done. Bug fixes from review.**
     - **Village keyboard bug.** In `mount.js` `onKey`, the trade branch picks a buy letter with `event.key.toLowerCase().charCodeAt(0) - 97`, so named keys like `ArrowUp`, `Enter`, `Escape`, and `Shift` count as letters and open buy prompts. Only accept single-character keys (`event.key.length === 1`). The same pattern is in `onFightKey` when choosing a spoil after a win; fix it there too.
     - **Non-ASCII `·` in the status line.** `placeLine` and the deck info line in `mount.js` use `·` as a separator. Replace it with an ASCII character (for example `|` or `-`).
     - **Selling by keyboard stops at 9 cards.** The trade screen uses single digits, so cards 10 and up cannot be sold from the keyboard. Give them a way (paging, or another key scheme).
@@ -90,12 +91,10 @@ Everything a character or monster has or can do is a card. That includes items, 
     - **Food.** One of the village trades should be food.
     - **Buy back.** You can buy back anything you sold to the village, as long as it is the same in-game day.
     - **Selling cut.** Selling to the village pays out 75% of the item's value. The village takes a 25% cut.
-28. **Death costs half your gold.** Three rules, all applying together:
+28. **Done. Death costs half your gold.** `applyDown` matches `NOTES.md`: half the coin, rounded up; 0 coin also drops one random card; no coin and no cards is game over, and `1` begins again.
     - **Coin.** Going down (dying) costs half the coin you are carrying, rounded up, instead of a flat 2. For example, 1 coin costs 1, 3 coin costs 2, and 0 coin costs nothing.
     - **Broke.** If you go down with 0 coin, you also lose one random card from your deck.
-    - **Game over.** You lose the game (game over) if you have no coin and no cards in your deck.
-
-    `NOTES.md` ("Going down") already has all three rules, so it is ahead of the code until this task is done. Change `applyDown` in `combat.js` to match all three, and add game-over handling.
+    - **Game over.** You lose the game (game over) if you have no coin and no cards in your deck. `1` begins again. Nothing is saved.
 
 ## Version control
 

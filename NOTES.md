@@ -61,7 +61,7 @@ The square the player is standing on is drawn as `  P  `. That only changes the 
 
 When the player moves off that square, the picture shows the array again (`  .  `, `  V  `, `  R  `, or `  S  `).
 
-The window follows the player. The status line shows the ground under you, your coordinates, your coin, and your health.
+The window follows the player. The status line shows the ground under you, your coordinates, your coin, and your health, separated by `|`.
 
 ## Travel
 
@@ -86,6 +86,12 @@ Movement inputs are two separate toggles, remembered in `localStorage` under `ad
 - swipe
 
 Either or both can be on. Both cannot be off. The last one left on is locked, so it cannot be switched off.
+
+Named keys such as `ArrowUp`, `Enter`, and `Shift` are never treated as letters. A buy or a spoil pick only accepts a single character (`a` to `z`).
+
+## Sound
+
+Tones are synthesized in the browser. There are no audio files. `sound.js` is the only place that makes them, so later effects are added there. The first tap or key unlocks sound. A step, a blocked step, opening the menu, coin changing hands, a strike, casting a card into the ruin, and going down each have a short tone.
 
 ## Cards
 
@@ -146,7 +152,7 @@ Fleeing is allowed on your turn. The creature still gets one hit. If you are sti
 
 The inn is not built yet, and this is not a save. You wake one square south of the village with half your maximum health (at least 1) and lose half your coin, rounded up (1 coin costs 1, 3 coin costs 2). If you have 0 coin, going down costs no coin, but you lose one random card from your deck. The fight is over. A slime you did not kill is still on its square.
 
-You lose the game (game over) if you have no coin and no cards in your deck.
+You lose the game (game over) if you have no coin and no cards in your deck. The screen says the trip is over. `1` begins again from the start of the zone. Nothing is saved.
 
 ## Random encounters
 
@@ -157,6 +163,8 @@ The zone is plains. On each move onto open ground, if five moves have passed sin
 Moving onto `V` opens the trading screen. Leave returns you to the map, still standing on the village. Moving onto it again opens the screen again.
 
 Buy spends coin equal to the card's value and takes it from the village. Sell adds the card's value to your coin and gives the card to the village. To swap, sell and then buy. Coin covers the difference in value. You cannot buy what you cannot afford.
+
+Sell keys are `1` to `9` for the nine cards on the current page. When the deck is longer than that, `[` and `]` turn the page. The buttons do the same.
 
 ## Ruin
 

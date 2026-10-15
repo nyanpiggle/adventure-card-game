@@ -4,6 +4,7 @@ import { KEYS, directionFromSwipe } from "./direction.js";
 import { TILES, createGame, groundName, tileAt, travel } from "./game.js";
 import { renderCard, renderCreature, renderMap, renderPlayer } from "./render.js";
 import { controlLocked, loadSettings, saveSettings, toggleSetting } from "./settings.js";
+import { play, unlockAudio } from "./sound.js";
 
 /** @typedef {import("./game.js").Screen} Screen */
 /** @typedef {import("./game.js").Dir} Dir */
@@ -18,6 +19,7 @@ const PHASE = {
   ruin: "Ruin",
   you: "You",
   fight: "Fight",
+  over: "Over",
 };
 
 /**
@@ -25,12 +27,13 @@ const PHASE = {
  * @returns {() => void}
  */
 export function mount(root) {
-  const game = createGame();
+  let game = createGame();
   let settings = loadSettings();
   /** @type {Pending | null} */
   let pending = null;
   /** @type {{ x: number, y: number, id: number } | null} */
   let origin = null;
+  let sellPage = 0;
 
   root.classList.add("game-root");
   root.replaceChildren();
@@ -61,11 +64,37 @@ export function mount(root) {
     pending = null;
   }
 
+  function beginAgain() {
+    game = createGame();
+    pending = null;
+    sellPage = 0;
+    draw();
+  }
+
+  const SELL_PAGE = 9;
+
+  function sellPages() {
+    return Math.max(1, Math.ceil(game.deck.length / SELL_PAGE));
+  }
+
+  function clampSellPage() {
+    if (sellPage >= sellPages()) sellPage = sellPages() - 1;
+    if (sellPage < 0) sellPage = 0;
+  }
+
   /** @param {Screen} screen */
   function go(screen) {
+    if (screen === "menu") play("menu");
+    if (screen !== "trade") sellPage = 0;
     game.screen = screen;
     game.message = "";
     clearPending();
+    draw();
+  }
+
+  function wake() {
+    applyDown(game);
+    play("down");
     draw();
   }
 
@@ -75,10 +104,12 @@ export function mount(root) {
     const moved = travel(game, dir);
     if (!moved) {
       game.message = "The zone ends here.";
+      play("bump");
       draw();
       return;
     }
     game.message = "";
+    play("step");
     const under = tileAt(game, game.player.x, game.player.y);
     if (under === TILES.village) game.screen = "trade";
     else if (under === TILES.ruin) game.screen = "ruin";
@@ -113,7 +144,7 @@ export function mount(root) {
 
   function placeLine() {
     const under = tileAt(game, game.player.x, game.player.y);
-    return `${groundName(under)} · ${game.player.x}, ${game.player.y} · ${game.purse} coin · ${game.health} hp`;
+    return `${groundName(under)} | ${game.player.x}, ${game.player.y} | ${game.purse} coin | ${game.health} hp`;
   }
 
   function drawMap() {
@@ -141,7 +172,7 @@ export function mount(root) {
 
   function drawDeck() {
     const panel = panelEl("DECK");
-    line(panel, `${game.deck.length} cards · weight ${deckWeight(game.deck)} · ${game.purse} coin`, "c-yellow");
+    line(panel, `${game.deck.length} cards | weight ${deckWeight(game.deck)} | ${game.purse} coin`, "c-yellow");
     line(panel, `Health ${game.health} / ${game.healthMax}`, "c-green");
     if (game.message) line(panel, game.message, "c-orange");
     if (game.deck.length === 0) {
@@ -228,15 +259,37 @@ export function mount(root) {
 
     line(panel, "YOUR DECK", "c-white");
     if (game.deck.length === 0) line(panel, "(empty)", "c-dim");
-    game.deck.forEach((id, index) => {
+    clampSellPage();
+    const start = sellPage * SELL_PAGE;
+    const page = game.deck.slice(start, start + SELL_PAGE);
+    page.forEach((id, slot) => {
       const card = cardById(id);
+      const index = start + slot;
       panel.append(
-        button(`${index + 1}  ${padName(card.name)} ${card.value}`, () => {
+        button(`${slot + 1}  ${padName(card.name)} ${card.value}`, () => {
           pending = { kind: "sell", index };
           draw();
         }),
       );
     });
+    if (sellPages() > 1) {
+      line(panel, `Cards ${start + 1}-${start + page.length} of ${game.deck.length}. [ ] turns the page.`, "c-dim");
+      const pages = document.createElement("div");
+      pages.className = "pair";
+      pages.append(
+        button("[", () => {
+          sellPage -= 1;
+          clampSellPage();
+          draw();
+        }, sellPage === 0),
+        button("]", () => {
+          sellPage += 1;
+          clampSellPage();
+          draw();
+        }, sellPage >= sellPages() - 1),
+      );
+      panel.append(pages);
+    }
 
     line(panel, "VILLAGE", "c-white");
     if (game.villageStock.length === 0) line(panel, "(nothing for sale)", "c-dim");
@@ -301,6 +354,8 @@ export function mount(root) {
     if (action.kind === "sell") game.message = sellCard(game, action.index).message;
     else if (action.kind === "buy") game.message = buyCard(game, action.index).message;
     else game.message = castIntoRuin(game, action.index).message;
+    if (action.kind !== "cast") play("coin");
+    else play("down");
     draw();
   }
 
@@ -384,12 +439,14 @@ export function mount(root) {
         panel.append(
           button(`${number + 1}  ${padName(entry.card.name)} ${entry.card.value}`, () => {
             playCombatCard(game, entry.index);
+            play("hit");
             draw();
           }),
         );
       });
       panel.append(button("0  Flee", () => {
         fleeFight(game);
+        play("bump");
         draw();
       }));
     } else if (fight.phase === "exchange") {
@@ -415,10 +472,7 @@ export function mount(root) {
         draw();
       }));
     } else {
-      panel.append(button("1  Wake", () => {
-        applyDown(game);
-        draw();
-      }));
+      panel.append(button("1  Wake", () => wake()));
     }
     stage.append(panel);
   }
@@ -482,12 +536,21 @@ export function mount(root) {
     else if (game.screen === "trade") hint.textContent = "Leave when you are done. Step back onto V to return.";
     else if (game.screen === "you") hint.textContent = "This card is you. The deck is what you carry.";
     else if (game.screen === "fight") hint.textContent = "Strike the creature card, or flee and take one hit.";
+    else if (game.screen === "over") hint.textContent = "The trip is over. Nothing was saved.";
     else hint.textContent = "Step off the ruin when you are done.";
+  }
+
+  function drawOver() {
+    const panel = panelEl("GAME OVER");
+    line(panel, game.message || "No coin, and nothing left to carry.", "c-red");
+    line(panel, "Nothing was saved. The plains start over.", "c-dim");
+    panel.append(button("1  Begin again", () => beginAgain()));
+    stage.append(panel);
   }
 
   function draw() {
     phase.textContent = PHASE[game.screen];
-    status.textContent = game.screen === "map" ? game.message || placeLine() : game.message || placeLine();
+    status.textContent = game.message || placeLine();
     stage.classList.toggle("is-map", game.screen === "map");
     stage.replaceChildren();
     if (game.screen === "map") drawMap();
@@ -497,6 +560,7 @@ export function mount(root) {
     else if (game.screen === "trade") drawTrade();
     else if (game.screen === "you") drawYou();
     else if (game.screen === "fight") drawFight();
+    else if (game.screen === "over") drawOver();
     else drawRuin();
     drawPad();
     drawHint();
@@ -515,6 +579,7 @@ export function mount(root) {
     if (fight.phase === "choose") {
       if (key === "0" || key === "Escape") {
         fleeFight(game);
+        play("bump");
         draw();
         return;
       }
@@ -522,7 +587,10 @@ export function mount(root) {
       const choices = combatChoices();
       if (digit >= 1 && digit <= choices.length) {
         const choice = choices[digit - 1];
-        if (choice) playCombatCard(game, choice.index);
+        if (choice) {
+          playCombatCard(game, choice.index);
+          play("hit");
+        }
         draw();
       }
       return;
@@ -541,7 +609,7 @@ export function mount(root) {
         draw();
         return;
       }
-      const letter = key.toLowerCase().charCodeAt(0) - 97;
+      const letter = letterIndex(key);
       if (letter >= 0 && letter < fight.deck.length) {
         claimSpoil(game, letter);
         draw();
@@ -549,13 +617,20 @@ export function mount(root) {
       return;
     }
     if (key === "1" || key === "Enter" || key === "0" || key === "Escape") {
-      applyDown(game);
-      draw();
+      wake();
     }
   }
 
   /** @param {KeyboardEvent} event */
   function onKey(event) {
+    unlockAudio();
+    if (game.screen === "over") {
+      if (event.key === "1" || event.key === "Enter") {
+        event.preventDefault();
+        beginAgain();
+      }
+      return;
+    }
     if (game.screen === "map") {
       const dir = KEYS[event.key];
       if (dir) {
@@ -637,13 +712,28 @@ export function mount(root) {
     }
 
     if (game.screen === "trade" && !pending) {
-      const digit = Number(event.key);
-      if (digit >= 1 && digit <= game.deck.length) {
-        pending = { kind: "sell", index: digit - 1 };
+      if (event.key === "[") {
+        sellPage -= 1;
+        clampSellPage();
         draw();
         return;
       }
-      const letter = event.key.toLowerCase().charCodeAt(0) - 97;
+      if (event.key === "]") {
+        sellPage += 1;
+        clampSellPage();
+        draw();
+        return;
+      }
+      const digit = Number(event.key);
+      if (event.key.length === 1 && digit >= 1 && digit <= SELL_PAGE) {
+        const index = sellPage * SELL_PAGE + digit - 1;
+        if (index < game.deck.length) {
+          pending = { kind: "sell", index };
+          draw();
+        }
+        return;
+      }
+      const letter = letterIndex(event.key);
       if (letter >= 0 && letter < game.villageStock.length) {
         pending = { kind: "buy", index: letter };
         draw();
@@ -672,6 +762,7 @@ export function mount(root) {
 
   /** @param {PointerEvent} event */
   function onPointerDown(event) {
+    unlockAudio();
     if (game.screen !== "map" || !settings.swipe) return;
     if (event.target instanceof Element && event.target.closest("button")) return;
     origin = { x: event.clientX, y: event.clientY, id: event.pointerId };
@@ -710,6 +801,14 @@ export function mount(root) {
     ac.abort();
     observer.disconnect();
   };
+}
+
+/** @param {string} key */
+function letterIndex(key) {
+  if (key.length !== 1) return -1;
+  const code = key.toLowerCase().charCodeAt(0);
+  if (code < 97 || code > 122) return -1;
+  return code - 97;
 }
 
 /** @param {string} name */

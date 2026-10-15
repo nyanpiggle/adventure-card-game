@@ -130,6 +130,21 @@ export function renderMap(map, game, stage) {
 }
 
 /**
+ * At most four lines of rules. A cut-off last line ends with "...".
+ * @param {string} text
+ * @returns {{ text: string, cls: string }[]}
+ */
+function ruleLines(text) {
+  const wrapped = wrapText(text, ART_W);
+  const lines = wrapped.slice(0, 4);
+  if (wrapped.length > 4) {
+    const last = lines[3] ?? "";
+    lines[3] = `${last.slice(0, ART_W - 3)}...`;
+  }
+  return lines.map((line) => ({ text: fitCell(line), cls: "c-dim" }));
+}
+
+/**
  * @param {HTMLElement} parent
  * @param {string} id
  */
@@ -143,9 +158,7 @@ export function renderCard(parent, id) {
   const rows = [
     { text: fitCell(card.name), cls: "c-white" },
     ...artFor(id).map((text) => ({ text, cls: useClass })),
-    ...wrapText(card.text, ART_W)
-      .slice(0, 4)
-      .map((text) => ({ text: fitCell(text), cls: "c-dim" })),
+    ...ruleLines(card.text),
     { text: fitCell(`Use: ${card.use}`), cls: useClass },
     ...(card.tags.length ? [{ text: fitCell(card.tags.join(" ")), cls: "c-dim" }] : []),
     { text: valueLine(card.value, card.weight), cls: "c-yellow" },

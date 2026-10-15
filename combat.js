@@ -160,20 +160,43 @@ export function claimSpoil(game, index) {
 }
 
 /**
- * Not a save. The inn is not built yet.
+ * Not a save. Wake south of the village.
+ * Half your coin, rounded up. Broke (0 coin) also loses one random card.
+ * No coin and no cards left is the end of the trip.
  * @param {import("./game.js").Game} game
+ * @param {() => number} [rng]
  */
-export function applyDown(game) {
-  const lost = Math.min(2, game.purse);
+export function applyDown(game, rng = Math.random) {
+  const hadCoin = game.purse;
+  const lost = Math.ceil(game.purse / 2);
   game.purse -= lost;
+  /** @type {string | null} */
+  let dropped = null;
+  if (hadCoin === 0 && game.deck.length > 0) {
+    const index = Math.floor(rng() * game.deck.length);
+    const id = game.deck[index];
+    if (id) {
+      dropped = cardById(id).name;
+      game.deck.splice(index, 1);
+      if (game.deckIndex >= game.deck.length) game.deckIndex = Math.max(0, game.deck.length - 1);
+    }
+  }
   game.health = Math.max(1, Math.ceil(game.healthMax / 2));
   game.player.x = game.village.x;
   game.player.y = Math.min(ZONE_SIZE - 1, game.village.y + 1);
   game.fight = null;
-  game.screen = "map";
   game.lastEncounterTurn = game.turns;
+  if (game.purse === 0 && game.deck.length === 0) {
+    game.screen = "over";
+    game.message = dropped
+      ? `${dropped} is gone. No coin, and nothing left to carry.`
+      : "No coin, and nothing left to carry.";
+    return;
+  }
+  game.screen = "map";
   const coinBit = lost > 0 ? `, short ${lost} coin` : "";
-  game.message = `You wake south of the village with ${game.health} health${coinBit}.`;
+  const cardBit = dropped ? `. ${dropped} is gone` : "";
+  game.message = `You wake south of the village with ${game.health} health${coinBit}${cardBit}.`;
 }
 
 /**

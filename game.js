@@ -11,7 +11,7 @@ export const TILES = {
 export const ZONE_SIZE = 25;
 
 /** @typedef {"n" | "e" | "s" | "w"} Dir */
-/** @typedef {"map" | "menu" | "deck" | "settings" | "trade" | "ruin" | "you" | "fight"} Screen */
+/** @typedef {"map" | "menu" | "deck" | "settings" | "trade" | "ruin" | "you" | "fight" | "over"} Screen */
 
 /**
  * @typedef {{
