@@ -143,7 +143,28 @@ Everything a character or monster has or can do is a card. That includes items, 
 
     These shapes are intentional buffs: Belt Knife damage goes from 3 to 4, and Acid Spit damage goes from 2 to 3. Update `cards.js` and `NOTES.md` to match.
 
-    Exactly how a damage shape removes hitbox cells (placement, rotation, overlap, partial hits), and whether the shape replaces the current health numbers, is not decided yet.
+    Healing uses the same shapes: a healing card restores the hitbox cells covered by its heal shape. Resting at the inn restores the full health shape. Examples:
+    - Health Potion:
+      ```
+      ##
+      ##
+      ##
+      ##
+      ```
+    - Food:
+      ```
+      ##
+      ##
+      ```
+    - Herbs:
+      ```
+      #
+       #
+      #
+       #
+      ```
+
+    Exactly how a damage shape removes hitbox cells (placement, rotation, overlap, partial hits), and whether the shape replaces the current health numbers, is not decided yet. How heal shapes are placed is not decided either.
 
 ## Version control
 
