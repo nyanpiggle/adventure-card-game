@@ -64,7 +64,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 9. **Sound effects for the current controls.** Synthesize simple sound effects for swipes and other interactions using the Web Audio API: pure synthesized tones, like a triangle or square wave with a quick decay. No audio files.
 10. **Some sort of library for future sound effects.** A reusable sound module so sounds can be shared and new sound effects added later without duplicating code.
 11. **Done. A game menu.** `[ Menu ]` or the `M` key. It holds the deck and the settings.
-12. **Inn at the village, and saving.** An inn at the village where you spend money to replenish health. It is also a save point: if you die, you end up back at the inn with everything you had when you were last there. This started as death insurance, but make it a real full save if feasible. Save with the browser's `localStorage` (no cookies, no consent pop-up). What is saved:
+12. **Inn at the village, and saving.** An inn at the village where you spend money to replenish health. Resting in the village is part of this task, and it is important. The details of resting are not decided yet. It is also a save point: if you die, you end up back at the inn with everything you had when you were last there. This started as death insurance, but make it a real full save if feasible. Save with the browser's `localStorage` (no cookies, no consent pop-up). What is saved:
     - **Player:** basically a single small array or object. Which cards are in your inventory (card IDs only; card values and stats are baked into the game engine and are not saved), your health, and your coordinates.
     - **World:** the location of any known monsters, and the locations of the villages and ruins in that save file.
 13. **Done. Cards.** The starter set of card data is in `cards.js` and listed in `NOTES.md`. New cards go there too.
@@ -90,7 +90,6 @@ Everything a character or monster has or can do is a card. That includes items, 
     - **Food.** One of the village trades should be food.
     - **Buy back.** You can buy back anything you sold to the village, as long as it is the same in-game day.
     - **Selling cut.** Selling to the village pays out 75% of the item's value. The village takes a 25% cut.
-28. **Village rest mechanic.** Add a way to rest in the village. This one is important. The details are not decided yet.
 
 ## Version control
 
