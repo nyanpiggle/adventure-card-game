@@ -93,6 +93,8 @@ A move on the plains or in the ruin advances the watch by one. Sleeping at the i
 
 Wolves on open ground still need five moves since the last one. The chance depends on the watch: 1 in 10 by day, 1 in 8 at dawn and dusk, and 1 in 5 at night.
 
+From the map or the ruin, `.` or the `[ . ]` button waits one watch. Waiting is not a move. It does not roll a wolf, and it does not count toward the five-move cooldown.
+
 ## Controls and settings
 
 Open the game menu with the `[ Menu ]` button or the `M` key. From a menu, `0` or Escape goes back one screen. A fight is not a menu: `0` there flees, or leaves the spoil, or wakes you.

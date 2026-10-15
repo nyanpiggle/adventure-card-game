@@ -7,7 +7,7 @@ import { renderCard, renderCreature, renderMap, renderPlayer } from "./render.js
 import { controlLocked, loadSettings, saveSettings, toggleSetting } from "./settings.js";
 import { readSave, restAtInn, writeSaveInto } from "./save.js";
 import { play, unlockAudio } from "./sound.js";
-import { clockLabel, dayOf, watchName } from "./time.js";
+import { advanceTime, clockLabel, dayOf, watchName } from "./time.js";
 
 /** @typedef {import("./game.js").Screen} Screen */
 /** @typedef {import("./game.js").Dir} Dir */
@@ -105,6 +105,15 @@ export function mount(root) {
   function wake() {
     applyDown(game);
     play("down");
+    draw();
+  }
+
+  function waitWatch() {
+    const before = game.clock;
+    advanceTime(game, 1);
+    game.message = `You wait. It is ${clockLabel(game.clock)}.`;
+    noteDay(before);
+    play("wait");
     draw();
   }
 
@@ -603,6 +612,7 @@ export function mount(root) {
       pad.append(grid);
     }
     pad.append(button("[ Menu ]", () => go("menu"), false, "Open menu"));
+    pad.append(button("[ . ]", () => waitWatch(), false, "Wait"));
   }
 
   /**
@@ -624,7 +634,7 @@ export function mount(root) {
           : settings.swipe
             ? "Swipe to move one square."
             : "Tap an arrow to move one square.";
-      hint.textContent = game.screen === "dungeon" ? `${move} < climbs out. * is the rubble.` : move;
+      hint.textContent = game.screen === "dungeon" ? `${move} < climbs out. * is the rubble. . waits.` : `${move} . waits.`;
       return;
     }
     if (game.screen === "menu") hint.textContent = "Deck, you, settings, or back to the map.";
@@ -744,6 +754,11 @@ export function mount(root) {
       if (event.key === "m" || event.key === "M") {
         event.preventDefault();
         go("menu");
+        return;
+      }
+      if (event.key === ".") {
+        event.preventDefault();
+        waitWatch();
       }
       return;
     }

@@ -3,7 +3,7 @@
  * Call unlockAudio() from the first tap or key. play() does nothing before that.
  */
 
-/** @typedef {"step" | "bump" | "menu" | "coin" | "hit" | "down" | "rest"} SoundName */
+/** @typedef {"step" | "bump" | "menu" | "coin" | "hit" | "down" | "rest" | "wait"} SoundName */
 
 /**
  * @typedef {{ type: OscillatorType, freq: number, to?: number, dur: number, gain: number }} Tone
@@ -18,6 +18,7 @@ const TONES = {
   hit: { type: "square", freq: 180, to: 90, dur: 0.08, gain: 0.04 },
   down: { type: "triangle", freq: 220, to: 70, dur: 0.22, gain: 0.06 },
   rest: { type: "triangle", freq: 196, to: 330, dur: 0.2, gain: 0.05 },
+  wait: { type: "triangle", freq: 392, dur: 0.04, gain: 0.03 },
 };
 
 /** @type {AudioContext | null} */
