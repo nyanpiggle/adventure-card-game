@@ -127,10 +127,15 @@ Every card has `id`, `name`, `weight`, `value`, `damage`, `use`, `tags`, and `te
 | Ashen Shard | combat | 1 | 6 | 1 | stone, attack | ruin pile |
 | Fang | combat | 3 | 4 | 1 | attack, beast | a wolf's deck |
 | Acid Spit | combat | 2 | 3 | 1 | attack, acid | a slime's deck |
+| Stone Spear | combat | 6 | 8 | 3 | stone, wood, attack | crafted |
 
 Open the deck from the game menu. A card is drawn as ASCII: a border, the name, a picture of 5 rows by 21 characters, the rules text, then use, tags, harm, value, and weight. The shop lists the price. A fight lists the harm.
 
 Trail Bread is the only card you can use from the deck. Using it eats the card and restores 4 health, and never past your maximum. At full health it does nothing.
+
+## Crafting
+
+The deck screen has a craft line. The one recipe is Ashen Shard plus Walking Staff, which makes a Stone Spear. The spear's harm is 6 and its price is 8, more than either part alone. `c` crafts it when both parts are in the deck. Each part is used up. The button stays locked until you have both.
 
 ## Player card
 

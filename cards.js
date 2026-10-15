@@ -110,6 +110,16 @@ export const CARDS = {
     tags: ["attack", "acid"],
     text: "A gob of slime. Metal that strikes the slime is eaten instead.",
   },
+  spear: {
+    id: "spear",
+    name: "Stone Spear",
+    weight: 3,
+    value: 8,
+    damage: 6,
+    use: "combat",
+    tags: ["stone", "wood", "attack"],
+    text: "An ashen shard lashed to a walking staff. It outfights both parts.",
+  },
 };
 
 /**
@@ -168,6 +178,43 @@ export function cardById(id) {
   const card = CARDS[id];
   if (!card) throw new Error(`Unknown card ${id}`);
   return card;
+}
+
+/** @type {{ id: string, parts: string[] }[]} */
+export const RECIPES = [{ id: "spear", parts: ["shard", "staff"] }];
+
+/**
+ * @param {string[]} deck
+ * @param {string} recipeId
+ */
+export function canCraft(deck, recipeId) {
+  const recipe = RECIPES.find((entry) => entry.id === recipeId);
+  if (!recipe) return false;
+  const held = deck.slice();
+  for (const part of recipe.parts) {
+    const index = held.indexOf(part);
+    if (index < 0) return false;
+    held.splice(index, 1);
+  }
+  return true;
+}
+
+/**
+ * @param {{ deck: string[], deckIndex: number }} game
+ * @param {string} recipeId
+ * @returns {{ ok: boolean, message: string }}
+ */
+export function craftCard(game, recipeId) {
+  const recipe = RECIPES.find((entry) => entry.id === recipeId);
+  if (!recipe || !canCraft(game.deck, recipeId)) return { ok: false, message: "You lack a part." };
+  for (const part of recipe.parts) {
+    const index = game.deck.indexOf(part);
+    game.deck.splice(index, 1);
+  }
+  game.deck.push(recipe.id);
+  clampDeckIndex(game);
+  const made = cardById(recipe.id);
+  return { ok: true, message: `You make a ${made.name}.` };
 }
 
 /** @param {string} id */

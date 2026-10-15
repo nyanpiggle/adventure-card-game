@@ -1,4 +1,4 @@
-import { buyCard, canUseInField, cardById, castIntoRuin, deckWeight, sellCard, siftRuin, useFieldCard } from "./cards.js";
+import { buyCard, canCraft, canUseInField, cardById, castIntoRuin, craftCard, deckWeight, sellCard, siftRuin, useFieldCard } from "./cards.js";
 import { applyDown, beginFight, claimSpoil, fleeFight, hpBar, playCombatCard, rollEncounter } from "./combat.js";
 import { DUNGEON, dungeonName, foeKind, generateDungeon, moveInDungeon } from "./dungeon.js";
 import { KEYS, directionFromSwipe } from "./direction.js";
@@ -259,6 +259,20 @@ export function mount(root) {
         );
       }
     }
+    line(panel, "CRAFT", "c-white");
+    line(panel, "Ashen Shard + Walking Staff = Stone Spear", "c-dim");
+    panel.append(
+      button(
+        "c  Craft",
+        () => {
+          const result = craftCard(game, "spear");
+          game.message = result.message;
+          play(result.ok ? "coin" : "bump");
+          draw();
+        },
+        !canCraft(game.deck, "spear"),
+      ),
+    );
     panel.append(button("0  Back", () => go("menu")));
     stage.append(panel);
   }
@@ -779,6 +793,11 @@ export function mount(root) {
           game.message = useFieldCard(game, game.deckIndex).message;
           draw();
         }
+      } else if (event.key === "c" || event.key === "C") {
+        const result = craftCard(game, "spear");
+        game.message = result.message;
+        play(result.ok ? "coin" : "bump");
+        draw();
       }
       return;
     }
