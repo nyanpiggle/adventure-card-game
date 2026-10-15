@@ -150,9 +150,29 @@ Fleeing is allowed on your turn. The creature still gets one hit. If you are sti
 
 ## Going down
 
-The inn is not built yet, and this is not a save. You wake one square south of the village with half your maximum health (at least 1) and lose half your coin, rounded up (1 coin costs 1, 3 coin costs 2). If you have 0 coin, going down costs no coin, but you lose one random card from your deck. The fight is over. A slime you did not kill is still on its square.
+If the inn remembers you, you wake on the map as that save left you. The fight is over. You do not lose extra coin or cards. Anything since the last rest is gone, including a slime you killed after that rest.
 
-You lose the game (game over) if you have no coin and no cards in your deck. The screen says the trip is over. `1` begins again from the start of the zone. Nothing is saved.
+If the inn does not remember you, you wake one square south of the village with half your maximum health (at least 1) and lose half your coin, rounded up (1 coin costs 1, 3 coin costs 2). If you have 0 coin, going down costs no coin, but you lose one random card from your deck. A slime you did not kill is still on its square.
+
+You lose the game (game over) only when the inn does not remember you and you have no coin and no cards in your deck. The screen says the trip is over. `1` begins again from the start of the zone.
+
+## Inn
+
+The inn is part of the village, not its own square. From the trading screen, the Inn button opens it. The `i` key does the same when that letter is not buying a card.
+
+A bed costs 2 coin. It fills your health, even if you were already well. It writes the save. If you cannot pay, nothing changes and nothing is written. `0` returns to the trading screen.
+
+## Save
+
+One save, in `localStorage` under `adventure-card-game:save`. No cookies. Card stats are not stored, only card ids.
+
+What is saved:
+
+- Player: card ids, health, coin, and coordinates
+- World: each known monster (kind, coordinates, and whether it is still there), the village and ruin coordinates, the village stock, and the ruin pile
+- Travel: the turn count, and the turn of the last random encounter
+
+Opening the page loads that save when there is one. You are on the map, not in a menu.
 
 ## Random encounters
 
@@ -160,7 +180,7 @@ The zone is plains. On each move onto open ground, if five moves have passed sin
 
 ## Village
 
-Moving onto `V` opens the trading screen. Leave returns you to the map, still standing on the village. Moving onto it again opens the screen again.
+Moving onto `V` opens the trading screen. Leave returns you to the map, still standing on the village. Moving onto it again opens the screen again. The inn is reached from this screen.
 
 Buy spends coin equal to the card's value and takes it from the village. Sell adds the card's value to your coin and gives the card to the village. To swap, sell and then buy. Coin covers the difference in value. You cannot buy what you cannot afford.
 

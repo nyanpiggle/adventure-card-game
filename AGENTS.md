@@ -15,6 +15,7 @@ Plain scripts, loaded by `index.html` through `app.js`. No build step.
 - `combat.js` - fights, random encounters, going down
 - `art.js` - ASCII pictures and card text wrapping (not stored on the card)
 - `settings.js` - movement toggles and `localStorage`
+- `save.js` - the inn's save
 - `sound.js` - synthesized tones (no audio files)
 - `direction.js` - swipes and arrow keys
 - `render.js` - map and card drawing
@@ -65,9 +66,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 9. **Done. Sound effects for the current controls.** Synthesize simple sound effects for swipes and other interactions using the Web Audio API: pure synthesized tones, like a triangle or square wave with a quick decay. No audio files.
 10. **Done. Some sort of library for future sound effects.** A reusable sound module so sounds can be shared and new sound effects added later without duplicating code. See `sound.js`.
 11. **Done. A game menu.** `[ Menu ]` or the `M` key. It holds the deck and the settings.
-12. **Inn at the village, and saving.** An inn at the village where you spend money to replenish health. Resting in the village is part of this task, and it is important. The details of resting are not decided yet. It is also a save point: if you die, you end up back at the inn with everything you had when you were last there. This started as death insurance, but make it a real full save if feasible. Save with the browser's `localStorage` (no cookies, no consent pop-up). What is saved:
-    - **Player:** basically a single small array or object. Which cards are in your inventory (card IDs only; card values and stats are baked into the game engine and are not saved), your health, and your coordinates.
-    - **World:** the location of any known monsters, and the locations of the villages and ruins in that save file.
+12. **Done. Inn at the village, and saving.** From the village, a bed costs 2 coin, fills health, and writes one `localStorage` save (`save.js`). Opening the page loads it. Dying loads it instead of the half-coin wake. With no save, going down is still the half-coin rules.
 13. **Done. Cards.** The starter set of card data is in `cards.js` and listed in `NOTES.md`. New cards go there too.
 14. **Done. Display cards as ASCII art.** Name, a 5×21 picture, then the function text, inside a border. The picture is drawn by `art.js`, not stored on the card.
 15. **Done. Card tags.** Cards have tags, like `attack` and `metal`. A metal card used on an acid creature is destroyed and deals no harm.
@@ -94,7 +93,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 28. **Done. Death costs half your gold.** `applyDown` matches `NOTES.md`: half the coin, rounded up; 0 coin also drops one random card; no coin and no cards is game over, and `1` begins again.
     - **Coin.** Going down (dying) costs half the coin you are carrying, rounded up, instead of a flat 2. For example, 1 coin costs 1, 3 coin costs 2, and 0 coin costs nothing.
     - **Broke.** If you go down with 0 coin, you also lose one random card from your deck.
-    - **Game over.** You lose the game (game over) if you have no coin and no cards in your deck. `1` begins again. Nothing is saved.
+    - **Game over.** You lose the game (game over) if you have no coin and no cards in your deck, and the inn has no save. `1` begins again. If the inn remembers you, dying loads that save instead.
 
 ## Version control
 

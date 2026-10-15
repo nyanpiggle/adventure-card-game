@@ -4,6 +4,7 @@ import { KEYS, directionFromSwipe } from "./direction.js";
 import { TILES, createGame, groundName, tileAt, travel } from "./game.js";
 import { renderCard, renderCreature, renderMap, renderPlayer } from "./render.js";
 import { controlLocked, loadSettings, saveSettings, toggleSetting } from "./settings.js";
+import { readSave, restAtInn, writeSaveInto } from "./save.js";
 import { play, unlockAudio } from "./sound.js";
 
 /** @typedef {import("./game.js").Screen} Screen */
@@ -20,6 +21,7 @@ const PHASE = {
   you: "You",
   fight: "Fight",
   over: "Over",
+  inn: "Inn",
 };
 
 /**
@@ -28,6 +30,11 @@ const PHASE = {
  */
 export function mount(root) {
   let game = createGame();
+  const remembered = readSave();
+  if (remembered) {
+    writeSaveInto(game, remembered);
+    game.message = "The inn remembers you.";
+  }
   let settings = loadSettings();
   /** @type {Pending | null} */
   let pending = null;
@@ -257,6 +264,9 @@ export function mount(root) {
       return;
     }
 
+    const innKey = letterIndex("i") >= game.villageStock.length;
+    panel.append(button(innKey ? "i  Inn" : "Inn", () => go("inn")));
+
     line(panel, "YOUR DECK", "c-white");
     if (game.deck.length === 0) line(panel, "(empty)", "c-dim");
     clampSellPage();
@@ -304,6 +314,25 @@ export function mount(root) {
       );
     });
     panel.append(button("0  Leave", () => go("map")));
+    stage.append(panel);
+  }
+
+  function rest() {
+    const result = restAtInn(game);
+    game.message = result.message;
+    play(result.ok ? "rest" : "bump");
+    draw();
+  }
+
+  function drawInn() {
+    const panel = panelEl("INN");
+    line(panel, "A bed, a fire, and a book with your name.", "c-dim");
+    line(panel, `Health ${game.health} / ${game.healthMax}`, "c-green");
+    line(panel, `Purse ${game.purse} coin`, "c-yellow");
+    line(panel, "A bed is 2 coin. It fills your health, and the inn remembers you.", "c-dim");
+    if (game.message) line(panel, game.message, "c-orange");
+    panel.append(button("1  Rest", () => rest()));
+    panel.append(button("0  Back", () => go("trade")));
     stage.append(panel);
   }
 
@@ -533,7 +562,8 @@ export function mount(root) {
     if (game.screen === "menu") hint.textContent = "Deck, you, settings, or back to the map.";
     else if (game.screen === "deck") hint.textContent = "Trail bread can be used from here.";
     else if (game.screen === "settings") hint.textContent = "Remembered on this phone.";
-    else if (game.screen === "trade") hint.textContent = "Leave when you are done. Step back onto V to return.";
+    else if (game.screen === "trade") hint.textContent = "Leave when you are done. The inn keeps a bed.";
+    else if (game.screen === "inn") hint.textContent = "A bed is 2 coin. Resting is the save.";
     else if (game.screen === "you") hint.textContent = "This card is you. The deck is what you carry.";
     else if (game.screen === "fight") hint.textContent = "Strike the creature card, or flee and take one hit.";
     else if (game.screen === "over") hint.textContent = "The trip is over. Nothing was saved.";
@@ -558,6 +588,7 @@ export function mount(root) {
     else if (game.screen === "deck") drawDeck();
     else if (game.screen === "settings") drawSettings();
     else if (game.screen === "trade") drawTrade();
+    else if (game.screen === "inn") drawInn();
     else if (game.screen === "you") drawYou();
     else if (game.screen === "fight") drawFight();
     else if (game.screen === "over") drawOver();
@@ -658,6 +689,7 @@ export function mount(root) {
         return;
       }
       if (game.screen === "deck" || game.screen === "settings" || game.screen === "you") go("menu");
+      else if (game.screen === "inn") go("trade");
       else go("map");
       return;
     }
@@ -711,7 +743,16 @@ export function mount(root) {
       return;
     }
 
+    if (game.screen === "inn") {
+      if (event.key === "1") rest();
+      return;
+    }
+
     if (game.screen === "trade" && !pending) {
+      if ((event.key === "i" || event.key === "I") && letterIndex("i") >= game.villageStock.length) {
+        go("inn");
+        return;
+      }
       if (event.key === "[") {
         sellPage -= 1;
         clampSellPage();

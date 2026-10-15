@@ -1,5 +1,6 @@
 import { cardById, creatureById } from "./cards.js";
 import { TILES, ZONE_SIZE, zoneOf } from "./game.js";
+import { readSave, writeSaveInto } from "./save.js";
 
 /** Random overworld fights. Not used for a monster you step on. */
 export const ENCOUNTER_CHANCE = 0.1;
@@ -160,13 +161,20 @@ export function claimSpoil(game, index) {
 }
 
 /**
- * Not a save. Wake south of the village.
- * Half your coin, rounded up. Broke (0 coin) also loses one random card.
- * No coin and no cards left is the end of the trip.
+ * If the inn remembers you, wake as that save left you.
+ * Otherwise this is not a save: half your coin, rounded up, south of the village.
+ * Broke (0 coin) also loses one random card. No coin and no cards ends the trip.
  * @param {import("./game.js").Game} game
  * @param {() => number} [rng]
  */
 export function applyDown(game, rng = Math.random) {
+  const saved = readSave();
+  if (saved) {
+    writeSaveInto(game, saved);
+    game.screen = "map";
+    game.message = "You wake at the inn, as you left it.";
+    return;
+  }
   const hadCoin = game.purse;
   const lost = Math.ceil(game.purse / 2);
   game.purse -= lost;
