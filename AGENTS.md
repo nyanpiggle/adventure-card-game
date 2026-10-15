@@ -94,6 +94,7 @@ Everything a character or monster has or can do is a card. That includes items, 
     - **Broke.** If you go down with 0 coin, you also lose one random card from your deck.
     - **Game over.** You lose the game (game over) if you have no coin and no cards in your deck, and the inn has no save. `1` begins again. If the inn remembers you, dying loads that save instead.
 29. **Done. Waiting.** On the map or in the ruin, `.` or `[ . ]` advances the watch by one. It is not a move, so it does not roll a wolf.
+30. **Done. Work takes a watch.** A finished sale, purchase, sift, cast, or craft advances the watch by one. A failed attempt does not.
 
 ## Version control
 

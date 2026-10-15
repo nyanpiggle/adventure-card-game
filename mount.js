@@ -276,6 +276,7 @@ export function mount(root) {
         () => {
           const result = craftCard(game, "spear");
           game.message = result.message;
+          if (result.ok) passWatch();
           play(result.ok ? "coin" : "bump");
           draw();
         },
@@ -449,13 +450,24 @@ export function mount(root) {
     panel.append(row);
   }
 
+  function passWatch() {
+    const before = game.clock;
+    advanceTime(game, 1);
+    noteDay(before);
+  }
+
   function confirmPending() {
     if (!pending) return;
     const action = pending;
     clearPending();
-    if (action.kind === "sell") game.message = sellCard(game, action.index).message;
-    else if (action.kind === "buy") game.message = buyCard(game, action.index).message;
-    else game.message = castIntoRuin(game, action.index).message;
+    const result =
+      action.kind === "sell"
+        ? sellCard(game, action.index)
+        : action.kind === "buy"
+          ? buyCard(game, action.index)
+          : castIntoRuin(game, action.index);
+    game.message = result.message;
+    if (result.ok) passWatch();
     if (action.kind !== "cast") play("coin");
     else play("down");
     draw();
@@ -472,7 +484,9 @@ export function mount(root) {
     }
     line(panel, game.ruinLoot.length ? "Something loose is still in the rubble." : "The rubble has been picked over.", "c-dim");
     panel.append(button("1  Sift the rubble", () => {
-      game.message = siftRuin(game).message;
+      const result = siftRuin(game);
+      game.message = result.message;
+      if (result.ok) passWatch();
       draw();
     }));
     if (game.deck.length === 0) {
@@ -813,6 +827,7 @@ export function mount(root) {
       } else if (event.key === "c" || event.key === "C") {
         const result = craftCard(game, "spear");
         game.message = result.message;
+        if (result.ok) passWatch();
         play(result.ok ? "coin" : "bump");
         draw();
       }
@@ -877,7 +892,9 @@ export function mount(root) {
 
     if (game.screen === "ruin" && !pending) {
       if (event.key === "1") {
-        game.message = siftRuin(game).message;
+        const result = siftRuin(game);
+        game.message = result.message;
+        if (result.ok) passWatch();
         draw();
       } else if (event.key === "2" && game.deck.length) {
         pending = { kind: "cast", index: game.deckIndex };

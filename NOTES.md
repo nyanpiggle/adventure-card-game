@@ -95,6 +95,8 @@ Wolves on open ground still need five moves since the last one. The chance depen
 
 From the map or the ruin, `.` or the `[ . ]` button waits one watch. Waiting is not a move. It does not roll a wolf, and it does not count toward the five-move cooldown.
 
+A finished sale, a finished purchase, a sift that finds a card, a cast, and a finished craft each advance the watch by one as well. A failed attempt does not.
+
 ## Controls and settings
 
 Open the game menu with the `[ Menu ]` button or the `M` key. From a menu, `0` or Escape goes back one screen. A fight is not a menu: `0` there flees, or leaves the spoil, or wakes you.
