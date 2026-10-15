@@ -7,6 +7,7 @@ import { renderCard, renderCreature, renderMap, renderPlayer } from "./render.js
 import { controlLocked, loadSettings, saveSettings, toggleSetting } from "./settings.js";
 import { readSave, restAtInn, writeSaveInto } from "./save.js";
 import { play, unlockAudio } from "./sound.js";
+import { clockLabel, dayOf, watchName } from "./time.js";
 
 /** @typedef {import("./game.js").Screen} Screen */
 /** @typedef {import("./game.js").Dir} Dir */
@@ -110,6 +111,7 @@ export function mount(root) {
   /** @param {Dir} dir */
   function step(dir) {
     if (game.screen === "dungeon") {
+      const beforeClock = game.clock;
       const moved = moveInDungeon(game, dir);
       const dungeon = game.dungeon;
       if (!moved || !dungeon) {
@@ -131,10 +133,12 @@ export function mount(root) {
         const kind = under ? foeKind(under) : null;
         if (kind) beginFight(game, kind, false);
       }
+      noteDay(beforeClock);
       draw();
       return;
     }
     if (game.screen !== "map") return;
+    const beforeClock = game.clock;
     const moved = travel(game, dir);
     if (!moved) {
       game.message = "The zone ends here.";
@@ -157,6 +161,7 @@ export function mount(root) {
       const met = rollEncounter(game, under);
       if (met) beginFight(game, met, true);
     }
+    noteDay(beforeClock);
     draw();
   }
 
@@ -181,12 +186,20 @@ export function mount(root) {
   }
 
   function placeLine() {
+    const tail = `${game.purse} coin | ${game.health} hp | ${clockLabel(game.clock)}`;
     if (game.layer === "dungeon" && game.dungeon && game.screen !== "map") {
       const under = game.dungeon.cells[game.dungeon.y]?.[game.dungeon.x] ?? DUNGEON.wall;
-      return `${dungeonName(under)} | ${game.dungeon.x}, ${game.dungeon.y} | ${game.purse} coin | ${game.health} hp`;
+      return `${dungeonName(under)} | ${game.dungeon.x}, ${game.dungeon.y} | ${tail}`;
     }
     const under = tileAt(game, game.player.x, game.player.y);
-    return `${groundName(under)} | ${game.player.x}, ${game.player.y} | ${game.purse} coin | ${game.health} hp`;
+    return `${groundName(under)} | ${game.player.x}, ${game.player.y} | ${tail}`;
+  }
+
+  /** @param {number} before */
+  function noteDay(before) {
+    if (dayOf(game.clock) === dayOf(before)) return;
+    const bit = "A new day.";
+    game.message = game.message ? `${game.message} ${bit}` : bit;
   }
 
   function drawMap() {
@@ -621,6 +634,7 @@ export function mount(root) {
   function draw() {
     phase.textContent = PHASE[game.screen];
     title.textContent = game.layer === "dungeon" ? "Ruin" : "Zone 1";
+    root.dataset.watch = watchName(game.clock);
     status.textContent = game.message || placeLine();
     const onGround = game.screen === "map" || game.screen === "dungeon";
     stage.classList.toggle("is-map", onGround);

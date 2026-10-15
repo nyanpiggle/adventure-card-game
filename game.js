@@ -1,4 +1,5 @@
 import { PLAYER, STARTING_DECK, STARTING_LOOT, STARTING_PURSE, STARTING_STOCK } from "./cards.js";
+import { advanceTime } from "./time.js";
 
 export const TILES = {
   empty: "  .  ",
@@ -59,6 +60,7 @@ export const ZONE_SIZE = 25;
  *   ruinLoot: string[],
  *   fight: Fight | null,
  *   message: string,
+ *   clock: number,
  *   layer: "zone" | "dungeon",
  *   dungeon: import("./dungeon.js").Dungeon | null,
  * }} Game
@@ -121,6 +123,7 @@ export function createGame() {
     ruinLoot: [...STARTING_LOOT],
     fight: null,
     message: "",
+    clock: 0,
     layer: "zone",
     dungeon: null,
   };
@@ -171,6 +174,7 @@ export function travel(game, dir) {
   game.player.x = x;
   game.player.y = y;
   game.turns += 1;
+  advanceTime(game, 1);
   return true;
 }
 

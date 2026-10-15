@@ -1,6 +1,7 @@
 import { CARDS } from "./cards.js";
 import { dungeonFromSave } from "./dungeon.js";
 import { TILES, ZONE_SIZE, zoneOf } from "./game.js";
+import { SLEEP, advanceTime, clockLabel } from "./time.js";
 
 const KEY = "adventure-card-game:save";
 const VERSION = 2;
@@ -17,6 +18,7 @@ export const BED_COST = 2;
  *   purse: number,
  *   deck: string[],
  *   turns: number,
+ *   clock: number,
  *   lastEncounterTurn: number,
  *   village: { x: number, y: number },
  *   ruin: { x: number, y: number },
@@ -83,6 +85,7 @@ function normalize(raw) {
     purse: data.purse,
     deck: /** @type {string[]} */ (data.deck).slice(),
     turns: data.turns,
+    clock: isInt(data.clock, 0, 1000000) ? data.clock : 0,
     lastEncounterTurn: data.lastEncounterTurn,
     village,
     ruin,
@@ -149,6 +152,7 @@ export function writeSaveInto(game, save) {
   game.deck = save.deck.slice();
   game.deckIndex = 0;
   game.turns = save.turns;
+  game.clock = save.clock;
   game.lastEncounterTurn = save.lastEncounterTurn;
   game.village.x = save.village.x;
   game.village.y = save.village.y;
@@ -185,6 +189,7 @@ export function storeSave(game) {
     purse: game.purse,
     deck: game.deck.slice(),
     turns: game.turns,
+    clock: game.clock,
     lastEncounterTurn: game.lastEncounterTurn,
     village: { x: game.village.x, y: game.village.y },
     ruin: { x: game.ruin.x, y: game.ruin.y },
@@ -223,8 +228,11 @@ export function restAtInn(game) {
   if (game.purse < BED_COST) return { ok: false, message: "A bed is 2 coin." };
   game.purse -= BED_COST;
   game.health = game.healthMax;
+  const newDay = advanceTime(game, SLEEP);
+  const when = clockLabel(game.clock);
+  const dayBit = newDay ? "A new day. " : "";
   if (!storeSave(game)) {
-    return { ok: true, message: "You sleep and wake well. This phone will not keep the memory." };
+    return { ok: true, message: `${dayBit}You sleep and wake well. It is ${when}. This phone will not keep the memory.` };
   }
-  return { ok: true, message: "You sleep. Health is full. The inn will remember this." };
+  return { ok: true, message: `${dayBit}You sleep. It is ${when}. The inn will remember this.` };
 }

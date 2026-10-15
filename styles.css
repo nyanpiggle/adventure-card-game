@@ -32,6 +32,41 @@ body {
   -webkit-user-select: none;
 }
 
+.game-root[data-watch="dawn"] {
+  --ground: #8d7354;
+  --ink: #ead8c4;
+}
+
+.game-root[data-watch="day"] {
+  --ground: #a39884;
+  --white: #ffffff;
+  --green: #86ffaa;
+  --yellow: #fff6a0;
+  --blue: #8ec4ff;
+}
+
+.game-root[data-watch="dusk"] {
+  --ground: #6d5646;
+  --ink: #cbb8a4;
+  --dim: #7e6f63;
+  --green: #3f9a64;
+  --yellow: #c9b45a;
+  --blue: #5d8cb8;
+}
+
+.game-root[data-watch="night"] {
+  --bg: #0c0b09;
+  --ground: #3a3632;
+  --ink: #8f877c;
+  --dim: #564f48;
+  --white: #bdb6ac;
+  --orange: #c46a18;
+  --green: #2c6844;
+  --red: #9a4545;
+  --yellow: #8a7d3e;
+  --blue: #466888;
+}
+
 .game-root header {
   margin: 0 0 0.65rem;
   flex: none;

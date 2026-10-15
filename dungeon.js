@@ -1,4 +1,5 @@
 import { TILES } from "./game.js";
+import { advanceTime } from "./time.js";
 
 /** Five characters, same as the overworld, so the columns line up. */
 export const DUNGEON = {
@@ -222,6 +223,7 @@ export function moveInDungeon(game, dir) {
   dungeon.x = x;
   dungeon.y = y;
   game.turns += 1;
+  advanceTime(game, 1);
   return true;
 }
 

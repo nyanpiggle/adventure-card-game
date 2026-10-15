@@ -19,6 +19,7 @@ Plain scripts, loaded by `index.html` through `app.js`. No build step.
 - `sound.js` - synthesized tones (no audio files)
 - `direction.js` - swipes and arrow keys
 - `dungeon.js` - ruin maps
+- `time.js` - the watch and the day
 - `render.js` - map and card drawing
 - `mount.js` - screens and input
 - `app.js` - starts the game on `#app`
@@ -76,7 +77,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 18. **Done. Monsters and combat.** Starter monsters are a wolf and a slime. See `NOTES.md`.
 19. **Done. Random encounters.** Plains, wolf only, 1 in 10 on a move onto open ground, and not again until five moves have passed. The slime is a map marker, not a random encounter.
 20. **Done. Random dungeon generator for the ruins.** Stepping on `R` enters a generated ruin: rooms joined by corridors of length 3 to 10. Wolves and slimes are room markers, `W` and `S`. `<` climbs out. `*` is the old rubble pile. The layout is kept, and the inn saves it.
-21. **Time system.** Turn-based, not real time. Time is an abstract number (not hours) on a scale of at most 100. Good candidate scales are 100 and 36; leave the final choice open for now. Ideally the scale has a lot of different factors. Moving to a new square advances time by one. Other actions can advance it too — for example, sleeping at the inn moves time forward by 30. The map's colours shift with time of day: brighter and more vibrant in daytime, darker and more desaturated at night (ties into task 2). Random encounter probabilities can also vary by time of day (ties into task 19).
+21. **Done. Time system.** A day is 60 watches (`time.js`). Moves and ruin steps advance it by 1. Sleep advances it by 30. Dawn, day, dusk, and night recolour the map. Wolf odds are 1 in 10, 1 in 8, and 1 in 5. The watch is saved.
 22. **Village daily trade reset.** Village trades reset every in-game day, using the established in-game time counter.
 23. **Done. Bug fixes from review.**
     - **Village keyboard bug.** In `mount.js` `onKey`, the trade branch picks a buy letter with `event.key.toLowerCase().charCodeAt(0) - 97`, so named keys like `ArrowUp`, `Enter`, `Escape`, and `Shift` count as letters and open buy prompts. Only accept single-character keys (`event.key.length === 1`). The same pattern is in `onFightKey` when choosing a spoil after a win; fix it there too.

@@ -2,6 +2,7 @@ import { cardById, creatureById } from "./cards.js";
 import { TILES, ZONE_SIZE, travelScreen, zoneOf } from "./game.js";
 import { clearDungeonFoe } from "./dungeon.js";
 import { readSave, writeSaveInto } from "./save.js";
+import { wolfChance } from "./time.js";
 
 /** Random overworld fights. Not used for a monster you step on. */
 export const ENCOUNTER_CHANCE = 0.1;
@@ -24,7 +25,7 @@ export function rollEncounter(game, ground, rng = Math.random) {
   ) {
     return null;
   }
-  if (rng() >= ENCOUNTER_CHANCE) return null;
+  if (rng() >= wolfChance(game.clock)) return null;
   return "wolf";
 }
 

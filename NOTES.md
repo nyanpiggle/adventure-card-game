@@ -61,7 +61,7 @@ The square the player is standing on is drawn as `  P  `. That only changes the 
 
 When the player moves off that square, the picture shows the array again (`  .  `, `  V  `, `  R  `, or `  S  `).
 
-The window follows the player. The status line shows the ground under you, your coordinates, your coin, and your health, separated by `|`.
+The window follows the player. The status line shows the ground under you, your coordinates, your coin, your health, and the watch, separated by `|`. A trip starts at dawn on day 1.
 
 ## Travel
 
@@ -74,7 +74,24 @@ One swipe moves one square, and only in a cardinal direction:
 - swipe left: west (`x` decreases)
 - swipe right: east (`x` increases)
 
-A diagonal swipe does not move. You cannot leave the 25×25 zone. A blocked step says "The zone ends here." Arrow keys do the same four moves. Each move advances the turn count by one.
+A diagonal swipe does not move. You cannot leave the 25×25 zone. A blocked step says "The zone ends here." Arrow keys do the same four moves. Each move advances the turn count by one, and the watch by one.
+
+## Time
+
+Time is a watch, not an hour, and not the real clock. A day is 60 watches long. 60 stays under 100 and has many factors (2, 3, 4, 5, 6, 10, 12, 15, 20, 30). The day can be changed later. The count is saved with the inn.
+
+The day is four watches of 15:
+
+| Watch | Numbers | Map |
+| --- | --- | --- |
+| Dawn | 0 to 14 | a little warmer |
+| Day | 15 to 29 | brighter |
+| Dusk | 30 to 44 | dimmer |
+| Night | 45 to 59 | darker and flatter |
+
+A move on the plains or in the ruin advances the watch by one. Sleeping at the inn advances it by 30. When the count crosses 60, it is a new day and the status says so.
+
+Wolves on open ground still need five moves since the last one. The chance depends on the watch: 1 in 10 by day, 1 in 8 at dawn and dusk, and 1 in 5 at night.
 
 ## Controls and settings
 
@@ -170,13 +187,13 @@ What is saved:
 
 - Player: card ids, health, coin, and coordinates
 - World: each known monster (kind, coordinates, and whether it is still there), the village and ruin coordinates, the village stock, the ruin pile, and the ruin map if you have entered it
-- Travel: the turn count, and the turn of the last random encounter
+- Travel: the turn count, the watch, and the turn of the last random encounter
 
 Opening the page loads that save when there is one. You are on the map, not in a menu.
 
 ## Random encounters
 
-The zone is plains. On each move onto open ground, if five moves have passed since the last random encounter, there is a 1 in 10 chance of a wolf. The five-move cooldown starts when the wolf appears, not when a roll misses. It does not apply to the slime, the village, or the ruin. The first move of a trip can already roll.
+The zone is plains. On each move onto open ground, if five moves have passed since the last random encounter, a wolf may appear. The chance is 1 in 10 by day, 1 in 8 at dawn and dusk, and 1 in 5 at night. The five-move cooldown starts when the wolf appears, not when a roll misses. It does not apply to the slime, the village, or the ruin. The first move of a trip can already roll.
 
 ## Village
 
