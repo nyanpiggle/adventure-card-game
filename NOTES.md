@@ -119,7 +119,7 @@ Every card has `id`, `name`, `weight`, `value`, `damage`, `use`, `tags`, and `te
 | Card | Use | Harm | Value | Weight | Tags | Where it starts |
 | --- | --- | --- | --- | --- | --- | --- |
 | Walking Staff | both | 2 | 3 | 2 | wood | your deck |
-| Trail Bread | field | 0 | 2 | 1 | food | your deck |
+| Trail Bread | field | 0 | 2 | 1 | food | your deck, and the village |
 | Belt Knife | combat | 3 | 6 | 1 | metal, attack | your deck |
 | Coil of Rope | field | 0 | 4 | 3 | fiber | village |
 | Pitch Torch | both | 1 | 5 | 1 | fire | village, and the ruin pile |
@@ -204,9 +204,11 @@ The zone is plains. On each move onto open ground, if five moves have passed sin
 
 Moving onto `V` opens the trading screen. Leave returns you to the map, still standing on the village. Moving onto it again opens the screen again. The inn is reached from this screen.
 
-Buy spends coin equal to the card's value and takes it from the village. Sell adds the card's value to your coin and gives the card to the village. To swap, sell and then buy. Coin covers the difference in value. You cannot buy what you cannot afford.
+Buy spends coin equal to the card's value and takes it from the village. Sell pays three quarters of the value, rounded down, and gives the card to the village. The village keeps the other quarter. To swap, sell and then buy. You cannot buy what you cannot afford.
 
-The village stock returns to Coil of Rope, Pitch Torch, and Copper Charm at the start of each new day. Anything you sold, and anything they had left, is replaced by that list.
+Trail Bread is for sale. It is food.
+
+A card you sold stays on the counter until the day turns, and you can buy it back at full price. At the start of each new day the counter is Trail Bread, Coil of Rope, Pitch Torch, and Copper Charm again. Yesterday's leftovers are gone.
 
 Sell keys are `1` to `9` for the nine cards on the current page. When the deck is longer than that, `[` and `]` turn the page. The buttons do the same.
 

@@ -1,4 +1,4 @@
-import { buyCard, canCraft, canUseInField, cardById, castIntoRuin, craftCard, deckWeight, sellCard, siftRuin, useFieldCard } from "./cards.js";
+import { buyCard, canCraft, canUseInField, cardById, castIntoRuin, craftCard, deckWeight, sellCard, sellPayout, siftRuin, useFieldCard } from "./cards.js";
 import { applyDown, beginFight, claimSpoil, fleeFight, hpBar, playCombatCard, rollEncounter } from "./combat.js";
 import { DUNGEON, dungeonName, foeKind, generateDungeon, moveInDungeon } from "./dungeon.js";
 import { KEYS, directionFromSwipe } from "./direction.js";
@@ -338,7 +338,7 @@ export function mount(root) {
       const card = cardById(id);
       const index = start + slot;
       panel.append(
-        button(`${slot + 1}  ${padName(card.name)} ${card.value}`, () => {
+        button(`${slot + 1}  ${padName(card.name)} ${sellPayout(card.value)}`, () => {
           pending = { kind: "sell", index };
           draw();
         }),
@@ -408,7 +408,9 @@ export function mount(root) {
         return;
       }
       const card = cardById(id);
-      line(panel, `Sell ${card.name} for ${card.value} coin?`, "c-yellow");
+      const payout = sellPayout(card.value);
+      const kept = card.value - payout;
+      line(panel, `Sell ${card.name} for ${payout} coin? The village keeps ${kept}.`, "c-yellow");
     } else if (pending.kind === "buy") {
       const id = game.villageStock[pending.index];
       if (!id) {

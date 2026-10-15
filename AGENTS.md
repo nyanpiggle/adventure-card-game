@@ -88,10 +88,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 24. **Done. Card value is not combat damage.** Each card has `damage` as well as `value`. Price climbs faster than harm. The Pitch Torch is worth 5 and hits for 1. Fights use harm. The shop uses price. Torch utility outside a fight is still not decided.
 25. **Done. Rename Ash Shard to Ashen Shard.** The id stays `shard`, so old saves still know the card. It is stone: value 6, damage 1.
 26. **Done. Crafting.** The deck screen has one recipe: Ashen Shard + Walking Staff = Stone Spear (harm 6, value 8). `c` crafts it when both are in the deck.
-27. **Village trade rules.**
-    - **Food.** One of the village trades should be food.
-    - **Buy back.** You can buy back anything you sold to the village, as long as it is the same in-game day.
-    - **Selling cut.** Selling to the village pays out 75% of the item's value. The village takes a 25% cut.
+27. **Done. Village trade rules.** The counter sells Trail Bread. Selling pays three quarters of the price, rounded down. A sold card can be bought back at full price until the day turns, which replaces the counter with the starting goods.
 28. **Done. Death costs half your gold.** `applyDown` matches `NOTES.md`: half the coin, rounded up; 0 coin also drops one random card; no coin and no cards is game over, and `1` begins again.
     - **Coin.** Going down (dying) costs half the coin you are carrying, rounded up, instead of a flat 2. For example, 1 coin costs 1, 3 coin costs 2, and 0 coin costs nothing.
     - **Broke.** If you go down with 0 coin, you also lose one random card from your deck.

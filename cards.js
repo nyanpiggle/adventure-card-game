@@ -137,7 +137,7 @@ export const STARTING_PURSE = 4;
 /** @type {string[]} */
 export const STARTING_DECK = ["staff", "bread", "knife"];
 /** @type {string[]} */
-export const STARTING_STOCK = ["rope", "torch", "charm"];
+export const STARTING_STOCK = ["bread", "rope", "torch", "charm"];
 /** @type {string[]} */
 export const STARTING_LOOT = ["shard", "torch"];
 
@@ -246,6 +246,12 @@ export function clampDeckIndex(game) {
   if (game.deckIndex < 0) game.deckIndex = 0;
 }
 
+/** Three quarters of the price, rounded down. The village keeps the rest. */
+/** @param {number} value */
+export function sellPayout(value) {
+  return Math.floor((value * 3) / 4);
+}
+
 /**
  * @param {{ purse: number, deck: string[], deckIndex: number, villageStock: string[] }} game
  * @param {number} index
@@ -258,11 +264,12 @@ export function sellCard(game, index) {
   const id = game.deck[index];
   if (!id) return { ok: false, message: "No such card." };
   const card = cardById(id);
+  const payout = sellPayout(card.value);
   game.deck.splice(index, 1);
-  game.purse += card.value;
+  game.purse += payout;
   game.villageStock.push(id);
   clampDeckIndex(game);
-  return { ok: true, message: `Sold ${card.name} for ${card.value} coin.` };
+  return { ok: true, message: `Sold ${card.name} for ${payout} coin.` };
 }
 
 /**
