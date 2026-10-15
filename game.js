@@ -11,7 +11,7 @@ export const TILES = {
 export const ZONE_SIZE = 25;
 
 /** @typedef {"n" | "e" | "s" | "w"} Dir */
-/** @typedef {"map" | "menu" | "deck" | "settings" | "trade" | "ruin" | "you" | "fight" | "over" | "inn"} Screen */
+/** @typedef {"map" | "menu" | "deck" | "settings" | "trade" | "ruin" | "you" | "fight" | "over" | "inn" | "dungeon"} Screen */
 
 /**
  * @typedef {{
@@ -59,6 +59,8 @@ export const ZONE_SIZE = 25;
  *   ruinLoot: string[],
  *   fight: Fight | null,
  *   message: string,
+ *   layer: "zone" | "dungeon",
+ *   dungeon: import("./dungeon.js").Dungeon | null,
  * }} Game
  */
 
@@ -119,6 +121,8 @@ export function createGame() {
     ruinLoot: [...STARTING_LOOT],
     fight: null,
     message: "",
+    layer: "zone",
+    dungeon: null,
   };
 }
 
@@ -168,6 +172,12 @@ export function travel(game, dir) {
   game.player.y = y;
   game.turns += 1;
   return true;
+}
+
+/** Where a fight sends you back. */
+/** @param {Game} game */
+export function travelScreen(game) {
+  return game.layer === "dungeon" ? "dungeon" : "map";
 }
 
 /** @param {string} symbol */

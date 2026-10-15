@@ -1,8 +1,9 @@
 import { CARDS } from "./cards.js";
+import { dungeonFromSave } from "./dungeon.js";
 import { TILES, ZONE_SIZE, zoneOf } from "./game.js";
 
 const KEY = "adventure-card-game:save";
-const VERSION = 1;
+const VERSION = 2;
 
 /** A bed. Pays for a full heal and for the save. */
 export const BED_COST = 2;
@@ -22,6 +23,7 @@ export const BED_COST = 2;
  *   monsters: { kind: "slime", x: number, y: number, alive: boolean }[],
  *   villageStock: string[],
  *   ruinLoot: string[],
+ *   dungeon: import("./dungeon.js").Dungeon | null,
  * }} Save
  */
 
@@ -54,7 +56,7 @@ function point(point) {
 function normalize(raw) {
   if (!raw || typeof raw !== "object") return null;
   const data = /** @type {Record<string, unknown>} */ (raw);
-  if (data.version !== VERSION) return null;
+  if (data.version !== 1 && data.version !== 2) return null;
   const village = point(data.village);
   const ruin = point(data.ruin);
   if (!isInt(data.x, 0, ZONE_SIZE - 1) || !isInt(data.y, 0, ZONE_SIZE - 1)) return null;
@@ -87,6 +89,7 @@ function normalize(raw) {
     monsters,
     villageStock: /** @type {string[]} */ (data.villageStock).slice(),
     ruinLoot: /** @type {string[]} */ (data.ruinLoot).slice(),
+    dungeon: data.version === 2 && data.dungeon != null ? dungeonFromSave(data.dungeon) : null,
   };
 }
 
@@ -160,6 +163,8 @@ export function writeSaveInto(game, save) {
   }));
   game.villageStock = save.villageStock.slice();
   game.ruinLoot = save.ruinLoot.slice();
+  game.dungeon = save.dungeon;
+  game.layer = "zone";
   game.fight = null;
   stampZone(game);
 }
@@ -191,6 +196,15 @@ export function storeSave(game) {
     })),
     villageStock: game.villageStock.slice(),
     ruinLoot: game.ruinLoot.slice(),
+    dungeon: game.dungeon
+      ? {
+          width: game.dungeon.width,
+          height: game.dungeon.height,
+          cells: game.dungeon.cells.map((row) => row.slice()),
+          x: game.dungeon.x,
+          y: game.dungeon.y,
+        }
+      : null,
   };
   try {
     box.setItem(KEY, JSON.stringify(save));

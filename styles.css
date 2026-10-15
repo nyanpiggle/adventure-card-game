@@ -122,6 +122,18 @@ body {
   color: var(--red);
 }
 
+.game-root #map .stairs {
+  color: var(--orange);
+}
+
+.game-root #map .rubble {
+  color: var(--yellow);
+}
+
+.game-root #map .wall {
+  color: var(--dim);
+}
+
 .game-root .panel {
   width: min(100%, 26rem);
   padding-bottom: 0.5rem;

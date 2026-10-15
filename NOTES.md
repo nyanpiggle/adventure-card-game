@@ -169,7 +169,7 @@ One save, in `localStorage` under `adventure-card-game:save`. No cookies. Card s
 What is saved:
 
 - Player: card ids, health, coin, and coordinates
-- World: each known monster (kind, coordinates, and whether it is still there), the village and ruin coordinates, the village stock, and the ruin pile
+- World: each known monster (kind, coordinates, and whether it is still there), the village and ruin coordinates, the village stock, the ruin pile, and the ruin map if you have entered it
 - Travel: the turn count, and the turn of the last random encounter
 
 Opening the page loads that save when there is one. You are on the map, not in a menu.
@@ -188,8 +188,23 @@ Sell keys are `1` to `9` for the nine cards on the current page. When the deck i
 
 ## Ruin
 
-Moving onto `R` opens the ruin. The ruin has a pile, in order: Ash Shard, then Pitch Torch. The pile does not refill.
+Moving onto `R` takes you into the ruin. The same ruin is kept for this trip: leaving and stepping onto `R` again returns you to where the stairs are, with whatever you already cleared.
 
-Sift the rubble to take the next card. When the pile is empty, sifting finds nothing.
+The ruin is not an open field. It is rooms of a few squares, joined by straight corridors three to ten squares long. The window follows you, as on the plains.
 
-Cast a card from your deck into the crack to lose it. Half the time, if a card is still in the pile, that card comes back out instead. Otherwise the cast card is simply gone.
+| Thing | Symbol |
+| --- | --- |
+| Wall | `  #  ` |
+| Floor | `  .  ` |
+| Stairs out | `  <  ` |
+| Rubble | `  *  ` |
+| Wolf | `  W  ` |
+| Slime | `  S  ` |
+
+`W` and `S` are the first letter of the monster. Stepping onto one starts a fight with that creature. A wolf in the ruin is a square, not a random encounter. Killing it clears the square. The plains slime is a different creature and stays where it was.
+
+You appear on the stairs. Step off them to explore. Step back onto `<` to climb out to the plains, still standing on `R`. A wall, or the edge, does not move you: "The stone does not give."
+
+`*` opens the rubble. The pile is in order: Ash Shard, then Pitch Torch. It does not refill. Sift to take the next card. When the pile is empty, sifting finds nothing. Cast a card from your deck into the crack to lose it. Half the time, if a card is still in the pile, that card comes back out instead. Otherwise the cast card is simply gone. Leaving the rubble puts you back in the ruin, still standing on `*`.
+
+The ruin is saved with the inn: the rooms, what is still standing in them, and where you were.

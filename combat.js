@@ -1,5 +1,6 @@
 import { cardById, creatureById } from "./cards.js";
-import { TILES, ZONE_SIZE, zoneOf } from "./game.js";
+import { TILES, ZONE_SIZE, travelScreen, zoneOf } from "./game.js";
+import { clearDungeonFoe } from "./dungeon.js";
 import { readSave, writeSaveInto } from "./save.js";
 
 /** Random overworld fights. Not used for a monster you step on. */
@@ -131,7 +132,7 @@ export function fleeFight(game) {
   }
   const name = fight.name;
   game.fight = null;
-  game.screen = "map";
+  game.screen = travelScreen(game);
   game.message = `${line} You break away from the ${name.toLowerCase()}.`;
 }
 
@@ -153,9 +154,10 @@ export function claimSpoil(game, index) {
     }
   }
   game.purse += creature.coin;
-  if (fight.creatureId === "slime") clearMonsterHere(game);
+  if (game.layer === "dungeon") clearDungeonFoe(game);
+  else if (fight.creatureId === "slime") clearMonsterHere(game);
   game.fight = null;
-  game.screen = "map";
+  game.screen = travelScreen(game);
   const coinBit = creature.coin > 0 ? `${creature.coin} coin. ` : "";
   game.message = taken ? `${coinBit}You take ${taken}.` : `${coinBit}You leave the rest.`;
 }
@@ -171,6 +173,7 @@ export function applyDown(game, rng = Math.random) {
   const saved = readSave();
   if (saved) {
     writeSaveInto(game, saved);
+    game.layer = "zone";
     game.screen = "map";
     game.message = "You wake at the inn, as you left it.";
     return;
@@ -192,6 +195,7 @@ export function applyDown(game, rng = Math.random) {
   game.health = Math.max(1, Math.ceil(game.healthMax / 2));
   game.player.x = game.village.x;
   game.player.y = Math.min(ZONE_SIZE - 1, game.village.y + 1);
+  game.layer = "zone";
   game.fight = null;
   game.lastEncounterTurn = game.turns;
   if (game.purse === 0 && game.deck.length === 0) {

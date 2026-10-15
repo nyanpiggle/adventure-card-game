@@ -1,5 +1,6 @@
 import { buyCard, canUseInField, cardById, castIntoRuin, deckWeight, sellCard, siftRuin, useFieldCard } from "./cards.js";
 import { applyDown, beginFight, claimSpoil, fleeFight, hpBar, playCombatCard, rollEncounter } from "./combat.js";
+import { DUNGEON, dungeonName, foeKind, generateDungeon, moveInDungeon } from "./dungeon.js";
 import { KEYS, directionFromSwipe } from "./direction.js";
 import { TILES, createGame, groundName, tileAt, travel } from "./game.js";
 import { renderCard, renderCreature, renderMap, renderPlayer } from "./render.js";
@@ -22,6 +23,7 @@ const PHASE = {
   fight: "Fight",
   over: "Over",
   inn: "Inn",
+  dungeon: "Delve",
 };
 
 /**
@@ -107,6 +109,31 @@ export function mount(root) {
 
   /** @param {Dir} dir */
   function step(dir) {
+    if (game.screen === "dungeon") {
+      const moved = moveInDungeon(game, dir);
+      const dungeon = game.dungeon;
+      if (!moved || !dungeon) {
+        game.message = "The stone does not give.";
+        play("bump");
+        draw();
+        return;
+      }
+      game.message = "";
+      play("step");
+      const under = dungeon.cells[dungeon.y]?.[dungeon.x];
+      if (under === DUNGEON.stairs) {
+        game.layer = "zone";
+        game.screen = "map";
+        game.message = "You climb back to the plains.";
+      } else if (under === DUNGEON.rubble) {
+        game.screen = "ruin";
+      } else {
+        const kind = under ? foeKind(under) : null;
+        if (kind) beginFight(game, kind, false);
+      }
+      draw();
+      return;
+    }
     if (game.screen !== "map") return;
     const moved = travel(game, dir);
     if (!moved) {
@@ -119,8 +146,12 @@ export function mount(root) {
     play("step");
     const under = tileAt(game, game.player.x, game.player.y);
     if (under === TILES.village) game.screen = "trade";
-    else if (under === TILES.ruin) game.screen = "ruin";
-    else if (under === TILES.slime) beginFight(game, "slime", false);
+    else if (under === TILES.ruin) {
+      if (!game.dungeon) game.dungeon = generateDungeon();
+      game.layer = "dungeon";
+      game.screen = "dungeon";
+      game.message = "The dark takes the plains away.";
+    } else if (under === TILES.slime) beginFight(game, "slime", false);
     else {
       game.screen = "map";
       const met = rollEncounter(game, under);
@@ -150,6 +181,10 @@ export function mount(root) {
   }
 
   function placeLine() {
+    if (game.layer === "dungeon" && game.dungeon && game.screen !== "map") {
+      const under = game.dungeon.cells[game.dungeon.y]?.[game.dungeon.x] ?? DUNGEON.wall;
+      return `${dungeonName(under)} | ${game.dungeon.x}, ${game.dungeon.y} | ${game.purse} coin | ${game.health} hp`;
+    }
     const under = tileAt(game, game.player.x, game.player.y);
     return `${groundName(under)} | ${game.player.x}, ${game.player.y} | ${game.purse} coin | ${game.health} hp`;
   }
@@ -160,7 +195,7 @@ export function mount(root) {
     map.setAttribute("role", "img");
     map.setAttribute(
       "aria-label",
-      `Zone map. You are at ${game.player.x}, ${game.player.y}.`,
+      `Zone map. You are at ${game.layer === "dungeon" && game.dungeon ? game.dungeon.x : game.player.x}, ${game.layer === "dungeon" && game.dungeon ? game.dungeon.y : game.player.y}.`,
     );
     stage.append(map);
     renderMap(map, game, stage);
@@ -172,7 +207,7 @@ export function mount(root) {
       button("1  Deck", () => go("deck")),
       button("2  Settings", () => go("settings")),
       button("3  You", () => go("you")),
-      button("0  Back", () => go("map")),
+      button("0  Back", () => go(game.layer === "dungeon" ? "dungeon" : "map")),
     );
     stage.append(panel);
   }
@@ -430,7 +465,7 @@ export function mount(root) {
         );
       }
     }
-    panel.append(button("0  Leave", () => go("map")));
+    panel.append(button("0  Leave", () => go(game.layer === "dungeon" ? "dungeon" : "map")));
     stage.append(panel);
   }
 
@@ -452,7 +487,7 @@ export function mount(root) {
   function drawFight() {
     const fight = game.fight;
     if (!fight) {
-      game.screen = "map";
+      game.screen = game.layer === "dungeon" ? "dungeon" : "map";
       drawMap();
       return;
     }
@@ -522,7 +557,7 @@ export function mount(root) {
 
   function drawPad() {
     pad.replaceChildren();
-    if (game.screen !== "map") {
+    if (game.screen !== "map" && game.screen !== "dungeon") {
       pad.hidden = true;
       return;
     }
@@ -553,10 +588,14 @@ export function mount(root) {
   }
 
   function drawHint() {
-    if (game.screen === "map") {
-      if (settings.swipe && settings.arrows) hint.textContent = "Swipe, or tap an arrow. One square.";
-      else if (settings.swipe) hint.textContent = "Swipe to move one square.";
-      else hint.textContent = "Tap an arrow to move one square.";
+    if (game.screen === "map" || game.screen === "dungeon") {
+      const move =
+        settings.swipe && settings.arrows
+          ? "Swipe, or tap an arrow. One square."
+          : settings.swipe
+            ? "Swipe to move one square."
+            : "Tap an arrow to move one square.";
+      hint.textContent = game.screen === "dungeon" ? `${move} < climbs out. * is the rubble.` : move;
       return;
     }
     if (game.screen === "menu") hint.textContent = "Deck, you, settings, or back to the map.";
@@ -566,6 +605,7 @@ export function mount(root) {
     else if (game.screen === "inn") hint.textContent = "A bed is 2 coin. Resting is the save.";
     else if (game.screen === "you") hint.textContent = "This card is you. The deck is what you carry.";
     else if (game.screen === "fight") hint.textContent = "Strike the creature card, or flee and take one hit.";
+    else if (game.screen === "ruin" && game.layer === "dungeon") hint.textContent = "Sift or cast, then leave. You are still in the ruin.";
     else if (game.screen === "over") hint.textContent = "The trip is over. Nothing was saved.";
     else hint.textContent = "Step off the ruin when you are done.";
   }
@@ -580,10 +620,12 @@ export function mount(root) {
 
   function draw() {
     phase.textContent = PHASE[game.screen];
+    title.textContent = game.layer === "dungeon" ? "Ruin" : "Zone 1";
     status.textContent = game.message || placeLine();
-    stage.classList.toggle("is-map", game.screen === "map");
+    const onGround = game.screen === "map" || game.screen === "dungeon";
+    stage.classList.toggle("is-map", onGround);
     stage.replaceChildren();
-    if (game.screen === "map") drawMap();
+    if (onGround) drawMap();
     else if (game.screen === "menu") drawMenu();
     else if (game.screen === "deck") drawDeck();
     else if (game.screen === "settings") drawSettings();
@@ -662,7 +704,7 @@ export function mount(root) {
       }
       return;
     }
-    if (game.screen === "map") {
+    if (game.screen === "map" || game.screen === "dungeon") {
       const dir = KEYS[event.key];
       if (dir) {
         event.preventDefault();
@@ -690,6 +732,7 @@ export function mount(root) {
       }
       if (game.screen === "deck" || game.screen === "settings" || game.screen === "you") go("menu");
       else if (game.screen === "inn") go("trade");
+      else if ((game.screen === "menu" || game.screen === "ruin") && game.layer === "dungeon") go("dungeon");
       else go("map");
       return;
     }
@@ -804,7 +847,7 @@ export function mount(root) {
   /** @param {PointerEvent} event */
   function onPointerDown(event) {
     unlockAudio();
-    if (game.screen !== "map" || !settings.swipe) return;
+    if ((game.screen !== "map" && game.screen !== "dungeon") || !settings.swipe) return;
     if (event.target instanceof Element && event.target.closest("button")) return;
     origin = { x: event.clientX, y: event.clientY, id: event.pointerId };
     try {
@@ -832,7 +875,7 @@ export function mount(root) {
   }, listen);
 
   const observer = new ResizeObserver(() => {
-    if (game.screen === "map") draw();
+    if (game.screen === "map" || game.screen === "dungeon") draw();
   });
   observer.observe(stage);
 

@@ -1,6 +1,7 @@
 import { ART_W, artFor, fitCell, valueLine, wrapText } from "./art.js";
 import { cardById, creatureById, PLAYER } from "./cards.js";
 import { hpBar } from "./combat.js";
+import { DUNGEON, dungeonGlyph } from "./dungeon.js";
 import { TILES, ZONE_SIZE, glyphAt, tileAt } from "./game.js";
 
 /**
@@ -17,9 +18,11 @@ function span(className, text) {
 /**
  * @param {HTMLElement} map
  * @param {HTMLElement} stage
+ * @param {number} maxCols
+ * @param {number} maxRows
  * @returns {{ cols: number, rows: number }}
  */
-function fit(map, stage) {
+function fit(map, stage, maxCols, maxRows) {
   const probe = document.createElement("span");
   probe.textContent = TILES.empty;
   probe.style.visibility = "hidden";
@@ -34,8 +37,8 @@ function fit(map, stage) {
   let rows = Math.floor((bounds.height - cellH * 2) / Math.max(cellW, cellH));
   if (cols % 2 === 0) cols -= 1;
   if (rows % 2 === 0) rows -= 1;
-  cols = Math.max(5, Math.min(ZONE_SIZE, cols));
-  rows = Math.max(3, Math.min(ZONE_SIZE, rows));
+  cols = Math.max(5, Math.min(maxCols, cols));
+  rows = Math.max(3, Math.min(maxRows, rows));
   return { cols, rows };
 }
 
@@ -45,11 +48,16 @@ function fit(map, stage) {
  * @param {HTMLElement} stage
  */
 export function renderMap(map, game, stage) {
-  const { cols, rows } = fit(map, stage);
+  const delving = game.screen === "dungeon" && game.dungeon;
+  const gridW = delving ? game.dungeon.width : ZONE_SIZE;
+  const gridH = delving ? game.dungeon.height : ZONE_SIZE;
+  const px = delving ? game.dungeon.x : game.player.x;
+  const py = delving ? game.dungeon.y : game.player.y;
+  const { cols, rows } = fit(map, stage, gridW, gridH);
   const halfC = Math.floor(cols / 2);
   const halfR = Math.floor(rows / 2);
-  const x0 = Math.min(Math.max(game.player.x - halfC, 0), ZONE_SIZE - cols);
-  const y0 = Math.min(Math.max(game.player.y - halfR, 0), ZONE_SIZE - rows);
+  const x0 = Math.min(Math.max(px - halfC, 0), gridW - cols);
+  const y0 = Math.min(Math.max(py - halfR, 0), gridH - rows);
   const mid = y0 + Math.floor(rows / 2);
   const width = cols * TILES.empty.length + 6;
 
@@ -102,13 +110,16 @@ export function renderMap(map, game, stage) {
       cells.textContent = " ".repeat(cols * TILES.empty.length);
     } else {
       for (let x = x0; x < x0 + cols; x++) {
-        const glyph = glyphAt(game, x, y);
+        const glyph = delving && game.dungeon ? dungeonGlyph(game.dungeon, x, y) : glyphAt(game, x, y);
         const cell = document.createElement("span");
         cell.textContent = glyph;
         if (glyph === TILES.player) cell.className = "p";
         else if (glyph === TILES.village) cell.className = "v";
         else if (glyph === TILES.ruin) cell.className = "r";
-        else if (glyph === TILES.slime) cell.className = "m";
+        else if (glyph === TILES.slime || glyph === DUNGEON.wolf || glyph === DUNGEON.slime) cell.className = "m";
+        else if (glyph === DUNGEON.stairs) cell.className = "stairs";
+        else if (glyph === DUNGEON.rubble) cell.className = "rubble";
+        else if (glyph === DUNGEON.wall) cell.className = "wall";
         else cell.className = "g";
         cells.appendChild(cell);
       }
@@ -124,9 +135,10 @@ export function renderMap(map, game, stage) {
     if (y < y0 + rows - 1) map.append(line(y, true));
   }
   map.append(compassEdge("S"));
-  map.dataset.x = String(game.player.x);
-  map.dataset.y = String(game.player.y);
-  map.dataset.under = tileAt(game, game.player.x, game.player.y);
+  map.dataset.x = String(px);
+  map.dataset.y = String(py);
+  const under = delving && game.dungeon ? game.dungeon.cells[py]?.[px] ?? DUNGEON.wall : tileAt(game, px, py);
+  map.dataset.under = under;
 }
 
 /**

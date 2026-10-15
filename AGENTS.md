@@ -18,6 +18,7 @@ Plain scripts, loaded by `index.html` through `app.js`. No build step.
 - `save.js` - the inn's save
 - `sound.js` - synthesized tones (no audio files)
 - `direction.js` - swipes and arrow keys
+- `dungeon.js` - ruin maps
 - `render.js` - map and card drawing
 - `mount.js` - screens and input
 - `app.js` - starts the game on `#app`
@@ -74,7 +75,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 17. **Done. Player card.** The player card holds health and deck size. It is not in the deck. Open it from the game menu.
 18. **Done. Monsters and combat.** Starter monsters are a wolf and a slime. See `NOTES.md`.
 19. **Done. Random encounters.** Plains, wolf only, 1 in 10 on a move onto open ground, and not again until five moves have passed. The slime is a map marker, not a random encounter.
-20. **Random dungeon generator for the ruins.** When you enter a ruin, it takes you straight into a dungeon map. The important part is that the ruins are a randomly generated map rather than a big open area. Give it corridors of random lengths (around three to ten is a starting idea; do not focus too much on exact corridor size) and random rooms of random sizes. Enemies appear in those rooms as markers on the map, just like the village and the ruin do on the overworld, but with different symbols: the first letter of the monster's name.
+20. **Done. Random dungeon generator for the ruins.** Stepping on `R` enters a generated ruin: rooms joined by corridors of length 3 to 10. Wolves and slimes are room markers, `W` and `S`. `<` climbs out. `*` is the old rubble pile. The layout is kept, and the inn saves it.
 21. **Time system.** Turn-based, not real time. Time is an abstract number (not hours) on a scale of at most 100. Good candidate scales are 100 and 36; leave the final choice open for now. Ideally the scale has a lot of different factors. Moving to a new square advances time by one. Other actions can advance it too — for example, sleeping at the inn moves time forward by 30. The map's colours shift with time of day: brighter and more vibrant in daytime, darker and more desaturated at night (ties into task 2). Random encounter probabilities can also vary by time of day (ties into task 19).
 22. **Village daily trade reset.** Village trades reset every in-game day, using the established in-game time counter.
 23. **Done. Bug fixes from review.**
