@@ -90,6 +90,7 @@ Everything a character or monster has or can do is a card. That includes items, 
     - **Food.** One of the village trades should be food.
     - **Buy back.** You can buy back anything you sold to the village, as long as it is the same in-game day.
     - **Selling cut.** Selling to the village pays out 75% of the item's value. The village takes a 25% cut.
+28. **Death costs half your gold.** Going down (dying) now costs half the coin you are carrying, instead of a flat 2. Update NOTES.md to match.
 
 ## Version control
 
