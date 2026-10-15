@@ -90,6 +90,7 @@ Everything a character or monster has or can do is a card. That includes items, 
     - **Food.** One of the village trades should be food.
     - **Buy back.** You can buy back anything you sold to the village, as long as it is the same in-game day.
     - **Selling cut.** Selling to the village pays out 75% of the item's value. The village takes a 25% cut.
+28. **Village rest mechanic.** Add a way to rest in the village. This one is important. The details are not decided yet.
 
 ## Version control
 
