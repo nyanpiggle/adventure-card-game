@@ -202,6 +202,8 @@ What is saved:
 
 Opening the page loads that save when there is one. You are on the map, not in a menu.
 
+From the game menu, `4` clears the save. It asks first. Yes starts the zone over from the beginning. Movement settings are a different store and stay. If the inn remembers nothing, the line is locked.
+
 ## Random encounters
 
 The zone is plains. On each move onto open ground, if five moves have passed since the last random encounter, a wolf may appear. The chance is 1 in 10 by day, 1 in 8 at dawn and dusk, and 1 in 5 at night. The five-move cooldown starts when the wolf appears, not when a roll misses. It does not apply to the slime, the village, or the ruin. The first move of a trip can already roll.

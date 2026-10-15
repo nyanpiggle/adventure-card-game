@@ -5,7 +5,7 @@ import { KEYS, directionFromSwipe } from "./direction.js";
 import { TILES, createGame, groundName, tileAt, travel } from "./game.js";
 import { renderCard, renderCreature, renderMap, renderPlayer } from "./render.js";
 import { controlLocked, loadSettings, saveSettings, toggleSetting } from "./settings.js";
-import { readSave, restAtInn, writeSaveInto } from "./save.js";
+import { clearSave, readSave, restAtInn, savePresent, writeSaveInto } from "./save.js";
 import { play, unlockAudio } from "./sound.js";
 import { advanceTime, clockLabel, dayOf, watchName } from "./time.js";
 
@@ -44,6 +44,7 @@ export function mount(root) {
   /** @type {{ x: number, y: number, id: number } | null} */
   let origin = null;
   let sellPage = 0;
+  let forgetting = false;
 
   root.classList.add("game-root");
   root.replaceChildren();
@@ -96,9 +97,18 @@ export function mount(root) {
   function go(screen) {
     if (screen === "menu") play("menu");
     if (screen !== "trade") sellPage = 0;
+    forgetting = false;
     game.screen = screen;
     game.message = "";
     clearPending();
+    draw();
+  }
+
+  function forgetSave() {
+    clearSave();
+    forgetting = false;
+    beginAgain();
+    game.message = "The inn has forgotten you.";
     draw();
   }
 
@@ -226,12 +236,43 @@ export function mount(root) {
 
   function drawMenu() {
     const panel = panelEl("GAME MENU");
+    if (game.message) line(panel, game.message, "c-orange");
+    if (forgetting) {
+      line(panel, "Clear the save and start the zone over?", "c-yellow");
+      line(panel, "Settings stay. The inn will not remember this.", "c-dim");
+      panel.append(
+        button("y  Yes", () => forgetSave()),
+        button("n  No", () => {
+          forgetting = false;
+          game.message = "";
+          draw();
+        }),
+      );
+      stage.append(panel);
+      return;
+    }
+    const remembered = savePresent();
     panel.append(
       button("1  Deck", () => go("deck")),
       button("2  Settings", () => go("settings")),
       button("3  You", () => go("you")),
+      button(
+        "4  Clear the save",
+        () => {
+          if (!savePresent()) {
+            game.message = "The inn remembers nothing.";
+            draw();
+            return;
+          }
+          forgetting = true;
+          game.message = "";
+          draw();
+        },
+        !remembered,
+      ),
       button("0  Back", () => go(game.layer === "dungeon" ? "dungeon" : "map")),
     );
+    if (!remembered) line(panel, "The inn remembers nothing.", "c-dim");
     stage.append(panel);
   }
 
@@ -654,7 +695,9 @@ export function mount(root) {
       hint.textContent = game.screen === "dungeon" ? `${move} < climbs out. * is the rubble. . waits.` : `${move} . waits.`;
       return;
     }
-    if (game.screen === "menu") hint.textContent = "Deck, you, settings, or back to the map.";
+    if (game.screen === "menu") hint.textContent = forgetting
+      ? "Yes forgets the inn and starts the zone over."
+      : "Deck, you, settings, or clear the save.";
     else if (game.screen === "deck") hint.textContent = "Trail bread can be used from here.";
     else if (game.screen === "settings") hint.textContent = "Remembered on this phone.";
     else if (game.screen === "trade") hint.textContent = "Leave when you are done. The inn keeps a bed.";
@@ -792,6 +835,12 @@ export function mount(root) {
         draw();
         return;
       }
+      if (forgetting) {
+        forgetting = false;
+        game.message = "";
+        draw();
+        return;
+      }
       if (game.screen === "deck" || game.screen === "settings" || game.screen === "you") go("menu");
       else if (game.screen === "inn") go("trade");
       else if ((game.screen === "menu" || game.screen === "ruin") && game.layer === "dungeon") go("dungeon");
@@ -800,9 +849,28 @@ export function mount(root) {
     }
 
     if (game.screen === "menu") {
+      if (forgetting) {
+        if (event.key === "y" || event.key === "Y" || event.key === "Enter") forgetSave();
+        else if (event.key === "n" || event.key === "N") {
+          forgetting = false;
+          game.message = "";
+          draw();
+        }
+        return;
+      }
       if (event.key === "1") go("deck");
       else if (event.key === "2") go("settings");
       else if (event.key === "3") go("you");
+      else if (event.key === "4") {
+        if (!savePresent()) {
+          game.message = "The inn remembers nothing.";
+          draw();
+          return;
+        }
+        forgetting = true;
+        game.message = "";
+        draw();
+      }
       return;
     }
 

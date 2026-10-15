@@ -67,7 +67,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 8. **Done. Portrait and landscape layouts.** Portrait stacks the map over the arrows. A wide landscape screen puts the map on the left and the arrows on the right. Menus use the full width.
 9. **Done. Sound effects for the current controls.** Synthesize simple sound effects for swipes and other interactions using the Web Audio API: pure synthesized tones, like a triangle or square wave with a quick decay. No audio files.
 10. **Done. Some sort of library for future sound effects.** A reusable sound module so sounds can be shared and new sound effects added later without duplicating code. See `sound.js`.
-11. **Done. A game menu.** `[ Menu ]` or the `M` key. It holds the deck and the settings.
+11. **Done. A game menu.** `[ Menu ]` or the `M` key. It holds the deck, the settings, you, and clearing the save.
 12. **Done. Inn at the village, and saving.** From the village, a bed costs 2 coin, fills health, and writes one `localStorage` save (`save.js`). Opening the page loads it. Dying loads it instead of the half-coin wake. With no save, going down is still the half-coin rules.
 13. **Done. Cards.** The starter set of card data is in `cards.js` and listed in `NOTES.md`. New cards go there too.
 14. **Done. Display cards as ASCII art.** Name, a 5×21 picture, then the function text, inside a border. The picture is drawn by `art.js`, not stored on the card.
@@ -96,6 +96,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 29. **Done. Waiting.** On the map or in the ruin, `.` or `[ . ]` advances the watch by one. It is not a move, so it does not roll a wolf.
 30. **Done. Work takes a watch.** A finished sale, purchase, sift, cast, or craft advances the watch by one. A failed attempt does not.
 31. **Done. The day has a bell.** When the watch crosses into a new day, a bell plays. The player card shows the day and the watch.
+32. **Done. Clear the save.** The game menu can forget the inn. It asks first, then deletes the save and starts the zone over. Settings stay.
 
 ## Version control
 

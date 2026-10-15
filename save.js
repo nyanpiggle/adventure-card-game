@@ -118,6 +118,30 @@ export function readSave() {
   }
 }
 
+/** True when a save blob is stored, even if it cannot be read. */
+export function savePresent() {
+  const box = storage();
+  if (!box) return false;
+  try {
+    return box.getItem(KEY) != null;
+  } catch {
+    return false;
+  }
+}
+
+/** Remove the inn's save. Settings are a different key and stay. */
+export function clearSave() {
+  const box = storage();
+  if (!box) return false;
+  try {
+    const had = box.getItem(KEY) != null;
+    box.removeItem(KEY);
+    return had;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Write the zone from the landmarks. The player is not stored in the array.
  * @param {import("./game.js").Game} game
