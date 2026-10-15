@@ -65,7 +65,7 @@ function creatureStrike(game) {
   }
   fight.deck.push(id);
   const card = cardById(id);
-  const harm = card.use === "field" ? 0 : card.value;
+  const harm = card.damage;
   game.health -= harm;
   if (harm === 0) return `${fight.name} fumbles ${card.name}.`;
   return `${fight.name} uses ${card.name} for ${harm}.`;
@@ -96,8 +96,8 @@ export function playCombatCard(game, index) {
     if (game.deckIndex >= game.deck.length) game.deckIndex = Math.max(0, game.deck.length - 1);
     log.push(`The acid eats ${card.name}. It deals no harm.`);
   } else {
-    fight.health -= card.value;
-    log.push(`${card.name} strikes for ${card.value}.`);
+    fight.health -= card.damage;
+    log.push(`${card.name} strikes for ${card.damage}.`);
   }
   if (fight.health <= 0) {
     fight.health = 0;

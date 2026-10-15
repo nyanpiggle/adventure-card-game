@@ -112,23 +112,23 @@ Tones are synthesized in the browser. There are no audio files. `sound.js` is th
 
 ## Cards
 
-Every card has `id`, `name`, `weight`, `value`, `use`, `tags`, and `text`.
+Every card has `id`, `name`, `weight`, `value`, `damage`, `use`, `tags`, and `text`.
 
-`use` is `combat`, `field`, or `both`. In a fight, `value` is the harm the card deals. Out of a fight, `value` is the price. Weight is shown and stored. It does not limit the deck yet. The deck stores ids only. Pictures are not part of the card data. Tags are words such as `attack` and `metal`.
+`use` is `combat`, `field`, or `both`. `value` is the price. `damage` is the harm in a fight. Price climbs faster than harm: a Pitch Torch is worth more than the bruise it leaves. Weight is shown and stored. It does not limit the deck yet. The deck stores ids only. Pictures are not part of the card data. Tags are words such as `attack` and `metal`.
 
-| Card | Use | Value | Weight | Tags | Where it starts |
-| --- | --- | --- | --- | --- | --- |
-| Walking Staff | both | 3 | 2 | wood | your deck |
-| Trail Bread | field | 2 | 1 | food | your deck |
-| Belt Knife | combat | 4 | 1 | metal, attack | your deck |
-| Coil of Rope | field | 3 | 3 | fiber | village |
-| Pitch Torch | both | 2 | 1 | fire | village, and the ruin pile |
-| Copper Charm | both | 5 | 1 | trinket | village |
-| Ash Shard | combat | 6 | 1 | stone, attack | ruin pile |
-| Fang | combat | 3 | 1 | attack, beast | a wolf's deck |
-| Acid Spit | combat | 2 | 1 | attack, acid | a slime's deck |
+| Card | Use | Harm | Value | Weight | Tags | Where it starts |
+| --- | --- | --- | --- | --- | --- | --- |
+| Walking Staff | both | 2 | 3 | 2 | wood | your deck |
+| Trail Bread | field | 0 | 2 | 1 | food | your deck |
+| Belt Knife | combat | 3 | 6 | 1 | metal, attack | your deck |
+| Coil of Rope | field | 0 | 4 | 3 | fiber | village |
+| Pitch Torch | both | 1 | 5 | 1 | fire | village, and the ruin pile |
+| Copper Charm | both | 1 | 8 | 1 | trinket | village |
+| Ash Shard | combat | 1 | 6 | 1 | stone, attack | ruin pile |
+| Fang | combat | 3 | 4 | 1 | attack, beast | a wolf's deck |
+| Acid Spit | combat | 2 | 3 | 1 | attack, acid | a slime's deck |
 
-Open the deck from the game menu. A card is drawn as ASCII: a border, the name, a picture of 5 rows by 21 characters, the rules text, then use, tags, value, and weight.
+Open the deck from the game menu. A card is drawn as ASCII: a border, the name, a picture of 5 rows by 21 characters, the rules text, then use, tags, harm, value, and weight. The shop lists the price. A fight lists the harm.
 
 Trail Bread is the only card you can use from the deck. Using it eats the card and restores 4 health, and never past your maximum. At full health it does nothing.
 
@@ -153,9 +153,9 @@ If you strike an `acid` creature with a `metal` card, the acid eats that card. T
 
 Stepping onto `S` starts a fight with that slime. A wolf can also stop you on open ground (see Random encounters). Village and ruin squares do not roll an encounter.
 
-You play one card whose use is `combat` or `both`. Field cards cannot be played. The card deals its value to the creature card. If that drops the creature to 0, it does not hit back.
+You play one card whose use is `combat` or `both`. Field cards cannot be played. The card deals its damage to the creature card. If that drops the creature to 0, it does not hit back.
 
-Otherwise the creature plays the first card of its deck, deals that card's value to you, and moves that card to the back of its deck.
+Otherwise the creature plays the first card of its deck, deals that card's damage to you, and moves that card to the back of its deck.
 
 Then:
 

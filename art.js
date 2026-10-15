@@ -92,12 +92,10 @@ export function fitCell(text, width = ART_W) {
 }
 
 /**
+ * @param {number} damage
  * @param {number} value
  * @param {number} weight
  */
-export function valueLine(value, weight) {
-  const left = `Value ${value}`;
-  const right = `Wt ${weight}`;
-  const gap = Math.max(1, ART_W - left.length - right.length);
-  return fitCell(left + " ".repeat(gap) + right);
+export function valueLine(damage, value, weight) {
+  return fitCell(`Harm ${damage}  Value ${value}  Wt ${weight}`);
 }

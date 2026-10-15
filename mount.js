@@ -514,7 +514,7 @@ export function mount(root) {
       if (choices.length === 0) line(panel, "You have nothing that will fight.", "c-dim");
       choices.forEach((entry, number) => {
         panel.append(
-          button(`${number + 1}  ${padName(entry.card.name)} ${entry.card.value}`, () => {
+          button(`${number + 1}  ${padName(entry.card.name)} harm ${entry.card.damage}`, () => {
             playCombatCard(game, entry.index);
             play("hit");
             draw();

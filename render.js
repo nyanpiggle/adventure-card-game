@@ -173,7 +173,7 @@ export function renderCard(parent, id) {
     ...ruleLines(card.text),
     { text: fitCell(`Use: ${card.use}`), cls: useClass },
     ...(card.tags.length ? [{ text: fitCell(card.tags.join(" ")), cls: "c-dim" }] : []),
-    { text: valueLine(card.value, card.weight), cls: "c-yellow" },
+    { text: valueLine(card.damage, card.value, card.weight), cls: "c-yellow" },
   ];
   for (const row of rows) {
     pre.append(span("c-dim", "|"), span(row.cls, row.text), span("c-dim", "|"), document.createTextNode("\n"));
