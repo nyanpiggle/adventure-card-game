@@ -124,7 +124,7 @@ Every card has `id`, `name`, `weight`, `value`, `damage`, `use`, `tags`, and `te
 | Coil of Rope | field | 0 | 4 | 3 | fiber | village |
 | Pitch Torch | both | 1 | 5 | 1 | fire | village, and the ruin pile |
 | Copper Charm | both | 1 | 8 | 1 | trinket | village |
-| Ash Shard | combat | 1 | 6 | 1 | stone, attack | ruin pile |
+| Ashen Shard | combat | 1 | 6 | 1 | stone, attack | ruin pile |
 | Fang | combat | 3 | 4 | 1 | attack, beast | a wolf's deck |
 | Acid Spit | combat | 2 | 3 | 1 | attack, acid | a slime's deck |
 
@@ -224,6 +224,6 @@ The ruin is not an open field. It is rooms of a few squares, joined by straight 
 
 You appear on the stairs. Step off them to explore. Step back onto `<` to climb out to the plains, still standing on `R`. A wall, or the edge, does not move you: "The stone does not give."
 
-`*` opens the rubble. The pile is in order: Ash Shard, then Pitch Torch. It does not refill. Sift to take the next card. When the pile is empty, sifting finds nothing. Cast a card from your deck into the crack to lose it. Half the time, if a card is still in the pile, that card comes back out instead. Otherwise the cast card is simply gone. Leaving the rubble puts you back in the ruin, still standing on `*`.
+`*` opens the rubble. The pile is in order: Ashen Shard, then Pitch Torch. It does not refill. Sift to take the next card. When the pile is empty, sifting finds nothing. Cast a card from your deck into the crack to lose it. Half the time, if a card is still in the pile, that card comes back out instead. Otherwise the cast card is simply gone. Leaving the rubble puts you back in the ruin, still standing on `*`.
 
 The ruin is saved with the inn: the rooms, what is still standing in them, and where you were.

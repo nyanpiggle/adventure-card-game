@@ -82,13 +82,13 @@ export const CARDS = {
   },
   shard: {
     id: "shard",
-    name: "Ash Shard",
+    name: "Ashen Shard",
     weight: 1,
     value: 6,
     damage: 1,
     use: "combat",
     tags: ["stone", "attack"],
-    text: "A flake of the ruin wall. It cuts.",
+    text: "A shard of stone from the ruin wall. On its own it barely cuts.",
   },
   fang: {
     id: "fang",
@@ -267,7 +267,7 @@ export function useFieldCard(game, index) {
  */
 export function siftRuin(game) {
   const id = game.ruinLoot.shift();
-  if (!id) return { ok: false, message: "Nothing else is loose in the ash." };
+  if (!id) return { ok: false, message: "Nothing else is loose." };
   game.deck.push(id);
   return { ok: true, message: `You find ${cardById(id).name}.` };
 }

@@ -86,7 +86,7 @@ Everything a character or monster has or can do is a card. That includes items, 
     - **Redundant ternary in `draw()`.** `game.screen === "map" ? game.message || placeLine() : game.message || placeLine()` has identical branches; simplify it.
     - **Cut-off rules text.** `renderCard` in `render.js` keeps only 4 lines of rules text (`.slice(0, 4)`) with no sign that text was cut. Show an indicator (for example ending the last line with `...`) when it is truncated.
 24. **Done. Card value is not combat damage.** Each card has `damage` as well as `value`. Price climbs faster than harm. The Pitch Torch is worth 5 and hits for 1. Fights use harm. The shop uses price. Torch utility outside a fight is still not decided.
-25. **Rename Ash Shard to Ashen Shard.** It is a shard of stone, not ash. On its own it has a value of about 6 and a damage of about 1. It should no longer be a cheap source of high damage.
+25. **Done. Rename Ash Shard to Ashen Shard.** The id stays `shard`, so old saves still know the card. It is stone: value 6, damage 1.
 26. **Crafting.** An area in the inventory (deck view) where cards can be combined. First recipe: Ashen Shard + Walking Staff (the walking stick) = Stone Spear. The shard is the spearhead. Stone Spear has damage 6 and a value of about 8, higher than the parts individually.
 27. **Village trade rules.**
     - **Food.** One of the village trades should be food.
