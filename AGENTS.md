@@ -95,7 +95,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 31. **Done. The day has a bell.** When the watch crosses into a new day, a bell plays. The player card shows the day and the watch.
 32. **Done. Clear the save.** The game menu (`5`) can forget the inn. It asks first, then deletes the save and starts the zone over. Settings stay.
 33. **Done. More recipes.** Staff of Fireballs: Stone Spear + Copper Charm, catalyst Pitch Torch (harm 8, value 20). Healing Potion: Glass Bottle + Rare Herbs, catalyst Acid Spit (heals 7). The village sells the bottle for 25 (tag `container`) and the herbs for 10 (tag `medicine`, heals 4). Catalysts come back.
-34. **2D health bars.** Health is shown as a 2D shape of `#` cells instead of a single number or line. Each creature has its own shape. Examples (one `#` per cell):
+34. **2D health bars.** Health is shown as a 2D shape of `#` cells. This health shape is also called the creature's "hitbox". Each creature has its own shape. Examples (one `#` per cell):
     - Human (player):
       ```
       ##
@@ -115,7 +115,31 @@ Everything a character or monster has or can do is a card. That includes items, 
        #
       ```
 
-    How damage removes cells, and whether the shape replaces the current health numbers, is not decided yet.
+    To attack, you drag the attack card onto the enemy's health shape (hitbox).
+
+    Weapons (attack cards) need a damage shape with a number of `#` squares equal to their attack stat. Examples:
+    - Fang:
+      ```
+      #
+      #
+      #
+      ```
+    - Belt Knife:
+      ```
+      ####
+      ```
+    - Walking Staff:
+      ```
+       #
+      #
+      ```
+    - Acid Spit:
+      ```
+      ##
+      #
+      ```
+
+    Exactly how a damage shape removes hitbox cells (placement, rotation, overlap, partial hits), and whether the shape replaces the current health numbers, is not decided yet.
 
 ## Version control
 
