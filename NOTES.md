@@ -144,7 +144,9 @@ Fleeing is allowed on your turn. The creature still gets one hit. If you are sti
 
 ## Going down
 
-The inn is not built yet, and this is not a save. You wake one square south of the village with half your maximum health (at least 1) and lose half your coin, rounded up (1 coin costs 1, 3 coin costs 2). If you have 0 coin, you lose one random card from your deck instead. The fight is over. A slime you did not kill is still on its square.
+The inn is not built yet, and this is not a save. You wake one square south of the village with half your maximum health (at least 1) and lose half your coin, rounded up (1 coin costs 1, 3 coin costs 2). If you have 0 coin, going down costs nothing and no card is lost. The fight is over. A slime you did not kill is still on its square.
+
+You lose the game (game over) if you have no coin and no cards in your deck.
 
 ## Random encounters
 
