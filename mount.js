@@ -830,7 +830,7 @@ export function mount(root) {
     if (game.screen === "menu") hint.textContent = forgetting
       ? "Yes forgets the inn and starts the zone over."
       : "Deck, craft, you, settings, or clear the save.";
-    else if (game.screen === "deck") hint.textContent = "Trail bread can be used from here.";
+    else if (game.screen === "deck") hint.textContent = "Bread, herbs, and a potion can be used from here.";
     else if (game.screen === "craft") {
       hint.textContent = craftPick === "uncraft"
         ? "A made card comes apart into its reagents."

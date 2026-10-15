@@ -42,6 +42,10 @@ export const ART = {
   fang: block(["  /\\  ", " /  \\ ", "| /\\ |", "|/  \\|", "      "]),
   spit: block(["  .  ", " ( ) ", "( ~ )", " '-' ", "  ~  "]),
   spear: block(["    ^    ", "    |    ", "    |    ", "    |    ", "   / \\   "]),
+  bottle: block(["  ___  ", " /   \\ ", "|     |", "|     |", " \\___/ "]),
+  herbs: block(["  \\|/  ", " --*-- ", "  /|\\  ", "   |   ", "  \\_/  "]),
+  firestaff: block(["   * *   ", "  ( * )  ", "    |    ", "    |    ", "   / \\   "]),
+  potion: block(["   _   ", "  ( )  ", "  |~|  ", "  |~|  ", "  \\_/  "]),
   wolf: block([
     " /\\___/\\ ",
     "(  o o  )",
@@ -98,5 +102,5 @@ export function fitCell(text, width = ART_W) {
  * @param {number} weight
  */
 export function valueLine(damage, value, weight) {
-  return fitCell(`Harm ${damage}  Value ${value}  Wt ${weight}`);
+  return fitCell(`Harm ${damage} Value ${value} Wt ${weight}`);
 }

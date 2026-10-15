@@ -120,6 +120,46 @@ export const CARDS = {
     tags: ["stone", "wood", "attack"],
     text: "An ashen shard lashed to a walking staff. It outfights both parts.",
   },
+  bottle: {
+    id: "bottle",
+    name: "Glass Bottle",
+    weight: 1,
+    value: 25,
+    damage: 0,
+    use: "field",
+    tags: ["container"],
+    text: "An empty bottle from the village. It holds a draught, not a fight.",
+  },
+  herbs: {
+    id: "herbs",
+    name: "Rare Herbs",
+    weight: 1,
+    value: 10,
+    damage: 0,
+    use: "field",
+    tags: ["medicine"],
+    text: "Chew them out of a fight. They restore 4 health.",
+  },
+  firestaff: {
+    id: "firestaff",
+    name: "Staff of Fireballs",
+    weight: 4,
+    value: 20,
+    damage: 8,
+    use: "combat",
+    tags: ["fire", "attack"],
+    text: "A spear and a copper charm, lit by a torch. It hits harder than the spear.",
+  },
+  potion: {
+    id: "potion",
+    name: "Healing Potion",
+    weight: 1,
+    value: 40,
+    damage: 0,
+    use: "field",
+    tags: ["medicine"],
+    text: "Drink it out of a fight. It restores 7 health.",
+  },
 };
 
 /**
@@ -137,7 +177,7 @@ export const STARTING_PURSE = 4;
 /** @type {string[]} */
 export const STARTING_DECK = ["staff", "bread", "knife"];
 /** @type {string[]} */
-export const STARTING_STOCK = ["bread", "rope", "torch", "charm"];
+export const STARTING_STOCK = ["bread", "rope", "torch", "charm", "herbs", "bottle"];
 /** @type {string[]} */
 export const STARTING_LOOT = ["shard", "torch"];
 
@@ -184,7 +224,11 @@ export function cardById(id) {
  * Two reagents are spent. The catalyst is required and given back.
  * @type {{ id: string, reagents: [string, string], catalyst: string }[]}
  */
-export const RECIPES = [{ id: "spear", reagents: ["shard", "staff"], catalyst: "rope" }];
+export const RECIPES = [
+  { id: "spear", reagents: ["shard", "staff"], catalyst: "rope" },
+  { id: "firestaff", reagents: ["spear", "charm"], catalyst: "torch" },
+  { id: "potion", reagents: ["bottle", "herbs"], catalyst: "spit" },
+];
 
 /** @param {string} id */
 export function isCraftedId(id) {
@@ -260,7 +304,7 @@ export function creatureById(id) {
 
 /** @param {string} id */
 export function canUseInField(id) {
-  return id === "bread";
+  return id === "bread" || id === "herbs" || id === "potion";
 }
 
 /** @param {string[]} deck */
@@ -328,7 +372,7 @@ export function buyCard(game, index) {
 }
 
 /**
- * Eat trail bread. Other cards do nothing out of a fight yet.
+ * Bread, herbs, and a potion restore health out of a fight. The card is eaten.
  * @param {{ health: number, healthMax: number, deck: string[], deckIndex: number }} game
  * @param {number} index
  * @returns {{ ok: boolean, message: string }}
@@ -341,11 +385,13 @@ export function useFieldCard(game, index) {
   if (!id) return { ok: false, message: "No such card." };
   if (!canUseInField(id)) return { ok: false, message: "Nothing to do with that out here." };
   if (game.health >= game.healthMax) return { ok: false, message: "You are already well." };
-  const gain = Math.min(4, game.healthMax - game.health);
+  const amount = id === "potion" ? 7 : 4;
+  const gain = Math.min(amount, game.healthMax - game.health);
   game.health += gain;
   game.deck.splice(index, 1);
   clampDeckIndex(game);
-  return { ok: true, message: `You eat the bread and gain ${gain} health.` };
+  const verb = id === "potion" ? "drink the potion" : id === "herbs" ? "chew the herbs" : "eat the bread";
+  return { ok: true, message: `You ${verb} and gain ${gain} health.` };
 }
 
 /**

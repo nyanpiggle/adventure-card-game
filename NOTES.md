@@ -134,10 +134,14 @@ Every card has `id`, `name`, `weight`, `value`, `damage`, `use`, `tags`, and `te
 | Fang | combat | 3 | 4 | 1 | attack, beast | a wolf's deck |
 | Acid Spit | combat | 2 | 3 | 1 | attack, acid | a slime's deck |
 | Stone Spear | combat | 6 | 8 | 3 | stone, wood, attack | crafted |
+| Glass Bottle | field | 0 | 25 | 1 | container | village |
+| Rare Herbs | field | 0 | 10 | 1 | medicine | village |
+| Staff of Fireballs | combat | 8 | 20 | 4 | fire, attack | crafted |
+| Healing Potion | field | 0 | 40 | 1 | medicine | crafted |
 
 Open the deck from the game menu. A card is drawn as ASCII: a border, the name, a picture of 5 rows by 21 characters, the rules text, then use, tags, harm, value, and weight. The shop lists the price. A fight lists the harm.
 
-Trail Bread is the only card you can use from the deck. Using it eats the card and restores 4 health, and never past your maximum. At full health it does nothing.
+Trail Bread, Rare Herbs, and a Healing Potion can be used from the deck. Bread and herbs restore 4 health. The potion restores 7. The card is used up, and health never goes past your maximum. At full health they do nothing. A Glass Bottle cannot be used this way.
 
 ## Crafting
 
@@ -147,7 +151,11 @@ The bench has two reagent slots and one catalyst slot. Each slot opens the deck 
 
 `4` tries the three cards against the recipe list. If they are not a recipe, nothing is spent and the bench says "That is not a recipe." An empty slot says "A slot is empty."
 
-The one recipe is Ashen Shard and Walking Staff, with a Coil of Rope as the catalyst. It makes a Stone Spear. The two reagents are spent. The rope comes back. Reagent order does not matter. The spear's harm is 6 and its price is 8, more than either reagent alone.
+The one spear recipe is Ashen Shard and Walking Staff, with a Coil of Rope as the catalyst. It makes a Stone Spear. The two reagents are spent. The rope comes back. Reagent order does not matter. The spear's harm is 6 and its price is 8, more than either reagent alone.
+
+A Staff of Fireballs is a Stone Spear and a Copper Charm, with a Pitch Torch as the catalyst. The spear is the ashen one, made from the shard. The charm is the copper piece on the counter. The torch comes back. The staff's harm is 8 and its price is 20.
+
+A Healing Potion is a Glass Bottle and Rare Herbs, with Acid Spit as the catalyst. The spit comes back. The bottle costs 25 coin at the village, and it is a container. The herbs cost 10, and they are medicine: chewing them restores 4 health. The potion restores 7.
 
 `5` opens uncraft. It lists made cards you are carrying. Choosing one returns its two reagents. The catalyst was never spent, so it is not given again.
 
@@ -224,9 +232,9 @@ Moving onto `V` opens the trading screen. Leave returns you to the map, still st
 
 Buy spends coin equal to the card's value and takes it from the village. Sell pays three quarters of the value, rounded down, and gives the card to the village. The village keeps the other quarter. To swap, sell and then buy. You cannot buy what you cannot afford.
 
-Trail Bread is for sale. It is food.
+Trail Bread is for sale, and so are Rare Herbs and a Glass Bottle. The bread is food. The herbs are medicine. The bottle is a container.
 
-A card you sold stays on the counter until the day turns, and you can buy it back at full price. At the start of each new day the counter is Trail Bread, Coil of Rope, Pitch Torch, and Copper Charm again. Yesterday's leftovers are gone.
+A card you sold stays on the counter until the day turns, and you can buy it back at full price. At the start of each new day the counter is Trail Bread, Coil of Rope, Pitch Torch, Copper Charm, Rare Herbs, and Glass Bottle again. Yesterday's leftovers are gone.
 
 Sell keys are `1` to `9` for the nine cards on the current page. When the deck is longer than that, `[` and `]` turn the page. The buttons do the same.
 
