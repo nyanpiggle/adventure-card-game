@@ -68,7 +68,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 9. **Done. Sound effects for the current controls.** Synthesize simple sound effects for swipes and other interactions using the Web Audio API: pure synthesized tones, like a triangle or square wave with a quick decay. No audio files.
 10. **Done. Some sort of library for future sound effects.** A reusable sound module so sounds can be shared and new sound effects added later without duplicating code. See `sound.js`.
 11. **Done. A game menu.** `[ Menu ]` or the `M` key. It holds the deck, the settings, you, and clearing the save.
-12. **Done. Inn at the village, and saving.** From the village, a bed costs 2 coin, fills health, and writes one `localStorage` save (`save.js`). Opening the page loads it. Dying loads it instead of the half-coin wake. With no save, going down is still the half-coin rules.
+12. **Done. Inn at the village, and saving.** From the village, a bed costs 2 coin, fills health, and writes one `localStorage` save (`save.js`). Opening the page loads it. Dying loads it. With no save, dying ends the run on the death screen.
 13. **Done. Cards.** The starter set of card data is in `cards.js` and listed in `NOTES.md`. New cards go there too.
 14. **Done. Display cards as ASCII art.** Name, a 5×21 picture, then the function text, inside a border. The picture is drawn by `art.js`, not stored on the card.
 15. **Done. Card tags.** Cards have tags, like `attack` and `metal`. A metal card used on an acid creature is destroyed and deals no harm.
@@ -89,10 +89,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 25. **Done. Rename Ash Shard to Ashen Shard.** The id stays `shard`, so old saves still know the card. It is stone: value 6, damage 1.
 26. **Done. Crafting.** Its own menu, beside the deck. Two reagent slots and a catalyst slot. The recipe is Ashen Shard + Walking Staff, catalyst Coil of Rope, result Stone Spear (harm 6, value 8). The rope comes back. A wrong set of cards fails. Uncraft lists made cards and returns the reagents.
 27. **Done. Village trade rules.** The counter sells Trail Bread. Selling pays three quarters of the price, rounded down. A sold card can be bought back at full price until the day turns, which replaces the counter with the starting goods.
-28. **Done. Death costs half your gold.** `applyDown` matches `NOTES.md`: half the coin, rounded up; 0 coin also drops one random card; no coin and no cards is game over, and `1` begins again.
-    - **Coin.** Going down (dying) costs half the coin you are carrying, rounded up, instead of a flat 2. For example, 1 coin costs 1, 3 coin costs 2, and 0 coin costs nothing.
-    - **Broke.** If you go down with 0 coin, you also lose one random card from your deck.
-    - **Game over.** You lose the game (game over) if you have no coin and no cards in your deck, and the inn has no save. `1` begins again. If the inn remembers you, dying loads that save instead.
+28. **Done. Death with no save ends the run.** `applyDown` matches `NOTES.md`. If the inn remembers you, dying loads that save. If it does not, the death screen is shown and `1` begins again. There is no half-coin wake.
 29. **Done. Waiting.** On the map or in the ruin, `.` or `[ . ]` advances the watch by one. It is not a move, so it does not roll a wolf.
 30. **Done. Work takes a watch.** A finished sale, purchase, sift, cast, or craft advances the watch by one. A failed attempt does not.
 31. **Done. The day has a bell.** When the watch crosses into a new day, a bell plays. The player card shows the day and the watch.

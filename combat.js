@@ -165,12 +165,10 @@ export function claimSpoil(game, index) {
 
 /**
  * If the inn remembers you, wake as that save left you.
- * Otherwise this is not a save: half your coin, rounded up, south of the village.
- * Broke (0 coin) also loses one random card. No coin and no cards ends the trip.
+ * With no save, the run ends on the death screen.
  * @param {import("./game.js").Game} game
- * @param {() => number} [rng]
  */
-export function applyDown(game, rng = Math.random) {
+export function applyDown(game) {
   const saved = readSave();
   if (saved) {
     writeSaveInto(game, saved);
@@ -179,37 +177,10 @@ export function applyDown(game, rng = Math.random) {
     game.message = "You wake at the inn, as you left it.";
     return;
   }
-  const hadCoin = game.purse;
-  const lost = Math.ceil(game.purse / 2);
-  game.purse -= lost;
-  /** @type {string | null} */
-  let dropped = null;
-  if (hadCoin === 0 && game.deck.length > 0) {
-    const index = Math.floor(rng() * game.deck.length);
-    const id = game.deck[index];
-    if (id) {
-      dropped = cardById(id).name;
-      game.deck.splice(index, 1);
-      if (game.deckIndex >= game.deck.length) game.deckIndex = Math.max(0, game.deck.length - 1);
-    }
-  }
-  game.health = Math.max(1, Math.ceil(game.healthMax / 2));
-  game.player.x = game.village.x;
-  game.player.y = Math.min(ZONE_SIZE - 1, game.village.y + 1);
-  game.layer = "zone";
   game.fight = null;
-  game.lastEncounterTurn = game.turns;
-  if (game.purse === 0 && game.deck.length === 0) {
-    game.screen = "over";
-    game.message = dropped
-      ? `${dropped} is gone. No coin, and nothing left to carry.`
-      : "No coin, and nothing left to carry.";
-    return;
-  }
-  game.screen = "map";
-  const coinBit = lost > 0 ? `, short ${lost} coin` : "";
-  const cardBit = dropped ? `. ${dropped} is gone` : "";
-  game.message = `You wake south of the village with ${game.health} health${coinBit}${cardBit}.`;
+  game.layer = "zone";
+  game.screen = "over";
+  game.message = "You go down. The inn does not remember you.";
 }
 
 /**

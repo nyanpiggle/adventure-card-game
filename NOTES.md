@@ -198,9 +198,7 @@ Fleeing is allowed on your turn. The creature still gets one hit. If you are sti
 
 If the inn remembers you, you wake on the map as that save left you. The fight is over. You do not lose extra coin or cards. Anything since the last rest is gone, including a slime you killed after that rest.
 
-If the inn does not remember you, you wake one square south of the village with half your maximum health (at least 1) and lose half your coin, rounded up (1 coin costs 1, 3 coin costs 2). If you have 0 coin, going down costs no coin, but you lose one random card from your deck. A slime you did not kill is still on its square.
-
-You lose the game (game over) only when the inn does not remember you and you have no coin and no cards in your deck. The screen says the trip is over. `1` begins again from the start of the zone.
+If the inn does not remember you, the run ends. The death screen says so. `1` begins again from the start of the zone. Nothing is taken off a save, because there is not one.
 
 ## Inn
 

@@ -850,7 +850,7 @@ export function mount(root) {
 
   function drawOver() {
     const panel = panelEl("GAME OVER");
-    line(panel, game.message || "No coin, and nothing left to carry.", "c-red");
+    line(panel, game.message || "You go down. The inn does not remember you.", "c-red");
     line(panel, "Nothing was saved. The plains start over.", "c-dim");
     panel.append(button("1  Begin again", () => beginAgain()));
     stage.append(panel);
