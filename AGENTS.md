@@ -117,6 +117,8 @@ Everything a character or monster has or can do is a card. That includes items, 
 
     To attack, you drag the attack card onto the enemy's health shape (hitbox).
 
+    Monsters hit the player's health shape (hitbox) the same way: their attack cards use damage shapes too.
+
     Weapons (attack cards) need a damage shape with a number of `#` squares equal to their attack stat. Examples:
     - Fang:
       ```
