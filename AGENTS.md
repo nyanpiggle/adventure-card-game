@@ -82,6 +82,14 @@ Everything a character or monster has or can do is a card. That includes items, 
     - **Selling by keyboard stops at 9 cards.** The trade screen uses single digits, so cards 10 and up cannot be sold from the keyboard. Give them a way (paging, or another key scheme).
     - **Redundant ternary in `draw()`.** `game.screen === "map" ? game.message || placeLine() : game.message || placeLine()` has identical branches; simplify it.
     - **Cut-off rules text.** `renderCard` in `render.js` keeps only 4 lines of rules text (`.slice(0, 4)`) with no sign that text was cut. Show an indicator (for example ending the last line with `...`) when it is truncated.
+23. **Card value is not combat damage.** A card's `value` (its price in gold) must no longer be the same number as the damage it deals in combat. Give cards a separate damage stat. As a general vibe, value (price) scales exponentially while damage scales linearly. Example: the Pitch Torch should have a higher value than its damage. It does little damage in combat but has some utility outside combat (the exact utility is not decided yet).
+24. **Rename Ash Shard to Ashen Shard.** It is a shard of stone, not ash. On its own it has a value of about 6 and a damage of about 1. It should no longer be a cheap source of high damage.
+25. **Crafting.** An area in the inventory (deck view) where cards can be combined. First recipe: Ashen Shard + Walking Staff (the walking stick) = Stone Spear. The shard is the spearhead. Stone Spear has damage 6 and a value of about 8, higher than the parts individually.
+26. **Village trade rules.**
+    - **Daily reset.** Village trades reset every in-game day, using the game's in-game time counter. This depends on task 21 (the time system); today only `game.turns` exists.
+    - **Food.** One of the village trades should be food.
+    - **Buy back.** You can buy back anything you sold to the village, as long as it is the same in-game day.
+    - **Selling cut.** Selling to the village pays out 75% of the item's value. The village takes a 25% cut.
 
 ## Version control
 
