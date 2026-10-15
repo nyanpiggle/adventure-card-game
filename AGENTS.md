@@ -90,7 +90,7 @@ Everything a character or monster has or can do is a card. That includes items, 
     - **Food.** One of the village trades should be food.
     - **Buy back.** You can buy back anything you sold to the village, as long as it is the same in-game day.
     - **Selling cut.** Selling to the village pays out 75% of the item's value. The village takes a 25% cut.
-28. **Death costs half your gold.** Going down (dying) now costs half the coin you are carrying, rounded up, instead of a flat 2. For example, 1 coin costs 1, 3 coin costs 2, and 0 coin costs nothing. `NOTES.md` ("Going down") is already updated to this rule, so it is ahead of the code until this task is done. Change `applyDown` in `combat.js` to match.
+28. **Death costs half your gold.** Going down (dying) now costs half the coin you are carrying, rounded up, instead of a flat 2. For example, 1 coin costs 1 and 3 coin costs 2. With 1 or more coin, no card is lost. With 0 coin, you lose one random card from your deck instead. `NOTES.md` ("Going down") already has both rules, so it is ahead of the code until this task is done. Change `applyDown` in `combat.js` to match both rules.
 
 ## Version control
 
