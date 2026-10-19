@@ -20,6 +20,7 @@ Plain scripts, loaded by `index.html` through `app.js`. No build step.
 - `direction.js` - swipes and arrow keys
 - `dungeon.js` - ruin maps
 - `time.js` - the watch and the day
+- `shapes.js` - hitboxes, stamps, rotation, and where a blow lands
 - `render.js` - map and card drawing
 - `mount.js` - screens and input
 - `app.js` - starts the game on `#app`
@@ -95,76 +96,7 @@ Everything a character or monster has or can do is a card. That includes items, 
 31. **Done. The day has a bell.** When the watch crosses into a new day, a bell plays. The player card shows the day and the watch.
 32. **Done. Clear the save.** The game menu (`5`) can forget the inn. It asks first, then deletes the save and starts the zone over. Settings stay.
 33. **Done. More recipes.** Staff of Fireballs: Stone Spear + Copper Charm, catalyst Pitch Torch (harm 8, value 20). Healing Potion: Glass Bottle + Rare Herbs, catalyst Acid Spit (heals 7). The village sells the bottle for 25 (tag `container`) and the herbs for 10 (tag `medicine`, heals 4). Catalysts come back.
-34. **2D health bars.** Health is shown as a 2D shape of `#` cells. This health shape is also called the creature's "hitbox". Each creature has its own shape. Examples (one `#` per cell):
-    - Human (player):
-      ```
-      ##
-      ##
-      ##
-      ##
-      ```
-    - Wolf:
-      ```
-      ###
-      ###
-      ```
-    - Slime:
-      ```
-       #
-      ###
-       #
-      ```
-
-    To attack, you drag the attack card onto the enemy's health shape (hitbox).
-
-    Monsters hit the player's health shape (hitbox) the same way: their attack cards use damage shapes too.
-
-    Weapons (attack cards) need a damage shape with a number of `#` squares equal to their attack stat. Examples:
-    - Fang:
-      ```
-      #
-      #
-      #
-      ```
-    - Belt Knife:
-      ```
-      ####
-      ```
-    - Walking Staff:
-      ```
-       #
-      #
-      ```
-    - Acid Spit:
-      ```
-      ##
-      #
-      ```
-
-    These shapes are intentional buffs: Belt Knife damage goes from 3 to 4, and Acid Spit damage goes from 2 to 3. Update `cards.js` and `NOTES.md` to match.
-
-    Healing uses the same shapes: a healing card restores the hitbox cells covered by its heal shape. Resting at the inn restores the full health shape. Examples:
-    - Health Potion:
-      ```
-      ##
-      ##
-      ##
-      ##
-      ```
-    - Food:
-      ```
-      ##
-      ##
-      ```
-    - Herbs:
-      ```
-      #
-       #
-      #
-       #
-      ```
-
-    Exactly how a damage shape removes hitbox cells (placement, rotation, overlap, partial hits), and whether the shape replaces the current health numbers, is not decided yet. How heal shapes are placed is not decided either.
+34. **Done. 2D health bars.** Health is a hitbox of `#` cells. You are four rows of `##` (8). A wolf is two rows of `###` (6). A slime is a diamond of 5. A strike or a heal is a shape laid on that hitbox. Drag the card onto the enemy, or nudge it with the arrows, turn it with `R`, and confirm. Cells that miss do nothing. The count of `#` on a weapon is its harm: the Belt Knife is 4 and Acid Spit is 3. Bread and herbs cover 4. The potion covers the whole body. The inn fills every cell. An old save's health number drops cells from the south-east until the count matches. Rules are in `NOTES.md`.
 
 ## Version control
 

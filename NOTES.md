@@ -53,7 +53,7 @@ Each of these has coordinates inside the zone.
 
 The village, ruin, and slime symbols are written into the array at those coordinates. The player is not. A wolf is not on the map. Wolves are random encounters.
 
-The player also starts with 8 health, 4 coin, and three cards: Walking Staff, Trail Bread, Belt Knife. The player card says "A traveller." Open it from the game menu as You.
+The player also starts with 8 health, 4 coin, and three cards: Walking Staff, Trail Bread, Belt Knife. Health is a shape of cells, not a bar. Yours is four rows of `##`. The player card says "A traveller." Open it from the game menu as You.
 
 ## What you see
 
@@ -61,7 +61,7 @@ The square the player is standing on is drawn as `  P  `. That only changes the 
 
 When the player moves off that square, the picture shows the array again (`  .  `, `  V  `, `  R  `, or `  S  `).
 
-The window follows the player. The status line shows the ground under you, your coordinates, your coin, your health, and the watch, separated by `|`. A trip starts at dawn on day 1.
+The window follows the player. The status line shows the ground under you, your coordinates, your coin, how many health cells are still standing, and the watch, separated by `|`. A trip starts at dawn on day 1.
 
 ## Travel
 
@@ -99,7 +99,7 @@ A finished sale, a finished purchase, a sift that finds a card, a cast, and a fi
 
 ## Controls and settings
 
-Open the game menu with the `[ Menu ]` button or the `M` key. From a menu, `0` or Escape goes back one screen. A fight is not a menu: `0` there flees, or leaves the spoil, or wakes you.
+Open the game menu with the `[ Menu ]` button or the `M` key. From a menu, `0` or Escape goes back one screen. While you are laying a heal shape, `0` puts that shape down first. A fight is not a menu: `0` there flees, or leaves the spoil, or wakes you.
 
 Movement inputs are two separate toggles, remembered in `localStorage` under `adventure-card-game:settings`:
 
@@ -118,30 +118,52 @@ Tones are synthesized in the browser. There are no audio files. `sound.js` is th
 
 ## Cards
 
-Every card has `id`, `name`, `weight`, `value`, `damage`, `use`, `tags`, and `text`.
+Every card has `id`, `name`, `weight`, `value`, `damage`, `use`, `tags`, `text`, and `shape`.
 
-`use` is `combat`, `field`, or `both`. `value` is the price. `damage` is the harm in a fight. Price climbs faster than harm: a Pitch Torch is worth more than the bruise it leaves. Weight is shown and stored. It does not limit the deck yet. The deck stores ids only. Pictures are not part of the card data. Tags are words such as `attack` and `metal`.
+`use` is `combat`, `field`, or `both`. `value` is the price. `damage` is how many `#` cells the strike shape holds. Price climbs faster than harm: a Pitch Torch is worth more than the bruise it leaves. A cell of the shape that does not land on a living body cell does nothing, so the number is the most it can cut, not a promise. Weight is shown and stored. It does not limit the deck yet. The deck stores ids only. Pictures are not part of the card data. Tags are words such as `attack` and `metal`.
 
 | Card | Use | Harm | Value | Weight | Tags | Where it starts |
 | --- | --- | --- | --- | --- | --- | --- |
 | Walking Staff | both | 2 | 3 | 2 | wood | your deck |
 | Trail Bread | field | 0 | 2 | 1 | food | your deck, and the village |
-| Belt Knife | combat | 3 | 6 | 1 | metal, attack | your deck |
+| Belt Knife | combat | 4 | 6 | 1 | metal, attack | your deck |
 | Coil of Rope | field | 0 | 4 | 3 | fiber | village |
 | Pitch Torch | both | 1 | 5 | 1 | fire | village, and the ruin pile |
 | Copper Charm | both | 1 | 8 | 1 | trinket | village |
 | Ashen Shard | combat | 1 | 6 | 1 | stone, attack | ruin pile |
 | Fang | combat | 3 | 4 | 1 | attack, beast | a wolf's deck |
-| Acid Spit | combat | 2 | 3 | 1 | attack, acid | a slime's deck |
+| Acid Spit | combat | 3 | 3 | 1 | attack, acid | a slime's deck |
 | Stone Spear | combat | 6 | 8 | 3 | stone, wood, attack | crafted |
 | Glass Bottle | field | 0 | 25 | 1 | container | village |
 | Rare Herbs | field | 0 | 10 | 1 | medicine | village |
 | Staff of Fireballs | combat | 8 | 20 | 4 | fire, attack | crafted |
 | Healing Potion | field | 0 | 40 | 1 | medicine | crafted |
 
-Open the deck from the game menu. A card is drawn as ASCII: a border, the name, a picture of 5 rows by 21 characters, the rules text, then use, tags, harm, value, and weight. The shop lists the price. A fight lists the harm.
+The Belt Knife's harm is 4, and Acid Spit's is 3. Both used to be one less. The extra cell is the shape.
 
-Trail Bread, Rare Herbs, and a Healing Potion can be used from the deck. Bread and herbs restore 4 health. The potion restores 7. The card is used up, and health never goes past your maximum. At full health they do nothing. A Glass Bottle cannot be used this way.
+Open the deck from the game menu. A card is drawn as ASCII: a border, the name, a picture of 5 rows by 21 characters, the rules text, then use, tags, the shape if it has one, then harm or heal, value, and weight. The shop lists the price. A fight lists the harm, which is the size of the shape.
+
+Trail Bread, Rare Herbs, and a Healing Potion can be used from the deck. Using one lays its shape on your body. `#` on a hurt cell restores that cell. `#` on a standing cell, or off the body, does nothing. Bread and herbs are 4 cells. The potion is your whole body, 8 cells. The card is eaten only when at least one cell is restored. At full health they do nothing. A Glass Bottle cannot be used this way. Arrow keys move the shape. `R` turns it. You can also drag it. `1` or Enter places it.
+
+The shapes:
+
+| Card | Shape |
+| --- | --- |
+| You | four rows of `##` |
+| Wolf | two rows of `###` |
+| Slime | ` # ` / `###` / ` # ` |
+| Walking Staff | ` #` / `#` |
+| Belt Knife | `####` |
+| Fang | three rows of `#` |
+| Acid Spit | `##` / `#` |
+| Stone Spear | two rows of `  # ` then `####` |
+| Staff of Fireballs | ` ## ` / `####` / ` ## ` |
+| Trail Bread | two rows of `##` |
+| Rare Herbs | `#` then ` #`, twice |
+| Healing Potion | four rows of `##` |
+| Pitch Torch, Copper Charm, Ashen Shard | one `#` |
+
+Rope and the Glass Bottle have no shape.
 
 ## Crafting
 
@@ -155,7 +177,7 @@ The one spear recipe is Ashen Shard and Walking Staff, with a Coil of Rope as th
 
 A Staff of Fireballs is a Stone Spear and a Copper Charm, with a Pitch Torch as the catalyst. The spear is the ashen one, made from the shard. The charm is the copper piece on the counter. The torch comes back. The staff's harm is 8 and its price is 20.
 
-A Healing Potion is a Glass Bottle and Rare Herbs, with Acid Spit as the catalyst. The spit comes back. The bottle costs 25 coin at the village, and it is a container. The herbs cost 10, and they are medicine: chewing them restores 4 health. The potion restores 7.
+A Healing Potion is a Glass Bottle and Rare Herbs, with Acid Spit as the catalyst. The spit comes back. The bottle costs 25 coin at the village, and it is a container. The herbs cost 10, and they are medicine: chewing them can restore up to 4 cells. The potion's shape is your whole body.
 
 `5` opens uncraft. It lists made cards you are carrying. Choosing one returns its two reagents. The catalyst was never spent, so it is not given again.
 
@@ -163,16 +185,16 @@ A finished craft still advances the watch by one. Uncraft does not.
 
 ## Player card
 
-You have a player card. It is not in the deck. The card says "A traveller." It also shows your health, how many cards you are carrying, and the day and watch. Maximum health is 8.
+You have a player card. It is not in the deck. The card says "A traveller." It also shows your health shape (`#` standing, `.` hurt), how many cells are left out of 8, how many cards you are carrying, and the day and watch. Maximum health is the 8 cells of that shape.
 
 ## Creature cards
 
-A wolf and a slime each have a creature card. You strike that card, not a separate body behind it. The creature card has tags and health. The creature also has a deck, and it fights with those cards.
+A wolf and a slime each have a creature card. You strike that card, not a separate body behind it. The creature card has tags. The creature also has a hitbox, and it fights with its deck.
 
-| Creature | Tags | Health | Coin | Deck |
-| --- | --- | --- | --- | --- |
-| Wolf | beast | 6 | 2 | Fang, Fang |
-| Slime | acid | 5 | 1 | Acid Spit, Acid Spit |
+| Creature | Tags | Shape | Cells | Coin | Deck |
+| --- | --- | --- | --- | --- | --- |
+| Wolf | beast | two rows of `###` | 6 | 2 | Fang, Fang |
+| Slime | acid | a diamond, ` # ` / `###` / ` # ` | 5 | 1 | Acid Spit, Acid Spit |
 
 ## Tags
 
@@ -182,17 +204,23 @@ If you strike an `acid` creature with a `metal` card, the acid eats that card. T
 
 Stepping onto `S` starts a fight with that slime. A wolf can also stop you on open ground (see Random encounters). Village and ruin squares do not roll an encounter.
 
-You play one card whose use is `combat` or `both`. Field cards cannot be played. The card deals its damage to the creature card. If that drops the creature to 0, it does not hit back.
+Health in a fight is the hitbox. A standing cell is `#`. A hurt cell is `.`. A hole in the shape, such as the corners of the slime, is a blank. You go down when none of your cells are left. The creature breaks when none of its cells are left.
 
-Otherwise the creature plays the first card of its deck, deals that card's damage to you, and moves that card to the back of its deck.
+You play one card whose use is `combat` or `both`. Field cards cannot be played. A number, or a tap, arms the card. Its shape is laid on the creature's hitbox, top-left of the stamp on the cell you choose. Drag the card onto the hitbox to strike as you let go. Arrow keys nudge the stamp. `R` turns it a quarter turn clockwise. Strike or Enter swings. `X` puts the card down without swinging. Cells of the stamp that miss the body, or land on a cell that is already hurt, do nothing. A swing that cuts nothing is still your turn.
+
+A metal card played on an acid creature is eaten at once. You do not place it. It deals no harm. The Belt Knife against the slime is that trade.
+
+If the creature's hitbox is empty, it does not hit back.
+
+Otherwise the creature plays the first card of its deck, lays that card's shape on you wherever it cuts the most cells, and moves that card to the back of its deck. Ties keep the unturned shape, then a higher cell, then a cell further west. An empty deck scratches your north-most standing cell, and the west-most if several share that row.
 
 Then:
 
 - Both still up: continue, and choose again.
-- Creature at 0: it breaks. You gain its coin. You may take one card from its deck, or leave them. A slain slime is removed from the map. A wolf was never a square.
-- You at 0: you go down. See below.
+- Creature at 0 cells: it breaks. You gain its coin. You may take one card from its deck, or leave them. A slain slime is removed from the map. A wolf was never a square.
+- You at 0 cells: you go down. See below.
 
-Fleeing is allowed on your turn. The creature still gets one hit. If you are still up, you are back on the map. If that hit drops you, you go down.
+Fleeing is allowed on your turn. The creature still gets one hit, placed the same way. If you are still up, you are back on the map. If that hit drops you, you go down.
 
 ## Going down
 
@@ -204,7 +232,7 @@ If the inn does not remember you, the run ends. The death screen says so. `1` be
 
 The inn is part of the village, not its own square. From the trading screen, the Inn button opens it. The `i` key does the same when that letter is not buying a card.
 
-A bed costs 2 coin. It fills your health, even if you were already well. It writes the save. If you cannot pay, nothing changes and nothing is written. `0` returns to the trading screen.
+A bed costs 2 coin. It fills every cell of your health shape, even if you were already well. It writes the save. If you cannot pay, nothing changes and nothing is written. `0` returns to the trading screen.
 
 ## Save
 
@@ -212,9 +240,11 @@ One save, in `localStorage` under `adventure-card-game:save`. No cookies. Card s
 
 What is saved:
 
-- Player: card ids, health, coin, and coordinates
+- Player: card ids, how many cells are standing, which cells are hurt, coin, and coordinates
 - World: each known monster (kind, coordinates, and whether it is still there), the village and ruin coordinates, the village stock, the ruin pile, and the ruin map if you have entered it
 - Travel: the turn count, the watch, and the turn of the last random encounter
+
+An older save has a health number and no wound list. That number is kept by dropping cells from the south-east of your shape until the count matches. A save from this version stores the hurt cells as `row,column`. Those cells are what load. The count is written beside them.
 
 Opening the page loads that save when there is one. You are on the map, not in a menu.
 

@@ -1,4 +1,5 @@
-import { PLAYER, STARTING_DECK, STARTING_LOOT, STARTING_PURSE, STARTING_STOCK } from "./cards.js";
+import { STARTING_DECK, STARTING_LOOT, STARTING_PURSE, STARTING_STOCK, BODY } from "./cards.js";
+import { blankCells, countMask, maskFromLines } from "./shapes.js";
 import { advanceTime } from "./time.js";
 
 export const TILES = {
@@ -20,6 +21,7 @@ export const ZONE_SIZE = 25;
  *   name: string,
  *   health: number,
  *   healthMax: number,
+ *   cells: number[][],
  *   deck: string[],
  *   phase: "choose" | "exchange" | "won" | "lost",
  *   log: string[],
@@ -52,6 +54,7 @@ export const ZONE_SIZE = 25;
  *   purse: number,
  *   health: number,
  *   healthMax: number,
+ *   cells: number[][],
  *   biome: "plains",
  *   lastEncounterTurn: number,
  *   deck: string[],
@@ -101,6 +104,7 @@ export function createGame() {
   ruinRow[ruin.x] = ruin.symbol;
   slimeRow[slime.x] = slime.symbol;
 
+  const you = maskFromLines(BODY.you);
   return {
     phase: "travel",
     screen: "map",
@@ -113,8 +117,9 @@ export function createGame() {
     monsters: [slime],
     turns: 0,
     purse: STARTING_PURSE,
-    health: PLAYER.healthMax,
-    healthMax: PLAYER.healthMax,
+    health: countMask(you),
+    healthMax: countMask(you),
+    cells: blankCells(you),
     biome: "plains",
     lastEncounterTurn: -1,
     deck: [...STARTING_DECK],

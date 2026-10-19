@@ -1,8 +1,8 @@
 import { ART_W, artFor, fitCell, valueLine, wrapText } from "./art.js";
-import { cardById, creatureById, PLAYER } from "./cards.js";
-import { hpBar } from "./combat.js";
+import { cardById, creatureById, PLAYER, BODY } from "./cards.js";
 import { DUNGEON, dungeonGlyph } from "./dungeon.js";
 import { TILES, ZONE_SIZE, glyphAt, tileAt } from "./game.js";
+import { countLines, maskFromLines, pictureLines, stampCovers } from "./shapes.js";
 import { clockLabel } from "./time.js";
 
 /**
@@ -167,6 +167,12 @@ export function renderCard(parent, id) {
   pre.className = "card";
   const useClass = card.use === "combat" ? "c-red" : card.use === "field" ? "c-green" : "c-blue";
   const rule = `+${"-".repeat(ART_W)}+`;
+  const shapeRows = card.shape
+    ? card.shape.map((text) => ({ text: fitCell(text), cls: useClass }))
+    : [];
+  const stats = card.shape && card.damage === 0
+    ? fitCell(`Heal ${countLines(card.shape)} Value ${card.value} Wt ${card.weight}`)
+    : valueLine(card.damage, card.value, card.weight);
   pre.append(span("c-dim", rule), document.createTextNode("\n"));
   const rows = [
     { text: fitCell(card.name), cls: "c-white" },
@@ -174,7 +180,8 @@ export function renderCard(parent, id) {
     ...ruleLines(card.text),
     { text: fitCell(`Use: ${card.use}`), cls: useClass },
     ...(card.tags.length ? [{ text: fitCell(card.tags.join(" ")), cls: "c-dim" }] : []),
-    { text: valueLine(card.damage, card.value, card.weight), cls: "c-yellow" },
+    ...shapeRows,
+    { text: stats, cls: "c-yellow" },
   ];
   for (const row of rows) {
     pre.append(span("c-dim", "|"), span(row.cls, row.text), span("c-dim", "|"), document.createTextNode("\n"));
@@ -197,7 +204,6 @@ export function renderCreature(parent, fight) {
     { text: fitCell(fight.name), cls: "c-red" },
     ...artFor(fight.creatureId).map((text) => ({ text, cls: "c-red" })),
     { text: fitCell(creature.tags.join(" ") || "creature"), cls: "c-dim" },
-    { text: fitCell(`HP ${hpBar(fight.health, fight.healthMax)}`), cls: "c-red" },
     { text: fitCell(`${Math.max(0, fight.health)} / ${fight.healthMax}`), cls: "c-yellow" },
   ];
   pre.append(span("c-dim", rule), document.createTextNode("\n"));
@@ -216,11 +222,12 @@ export function renderPlayer(parent, game) {
   const pre = document.createElement("pre");
   pre.className = "card";
   const rule = `+${"-".repeat(ART_W)}+`;
+  const body = maskFromLines(BODY.you);
   const rows = [
     { text: fitCell(PLAYER.name), cls: "c-white" },
     ...artFor(PLAYER.id).map((text) => ({ text, cls: "c-white" })),
     ...wrapText(PLAYER.text, ART_W).map((text) => ({ text: fitCell(text), cls: "c-dim" })),
-    { text: fitCell(`HP ${hpBar(game.health, game.healthMax)}`), cls: "c-green" },
+    ...pictureLines(body, game.cells).map((text) => ({ text: fitCell(text), cls: "c-green" })),
     { text: fitCell(`${game.health} / ${game.healthMax}    Deck ${game.deck.length}`), cls: "c-yellow" },
     { text: fitCell(clockLabel(game.clock)), cls: "c-orange" },
   ];
@@ -230,4 +237,58 @@ export function renderPlayer(parent, game) {
   }
   pre.append(span("c-dim", rule));
   parent.append(pre);
+}
+
+/**
+ * A body you can drag a stamp onto. Ghost cells are where the stamp sits.
+ * @param {HTMLElement} parent
+ * @param {boolean[][]} body
+ * @param {number[][]} cells
+ * @param {{ mask: boolean[][], ar: number, ac: number } | null} ghost
+ * @param {"you" | "foe"} who
+ * @param {(row: number, col: number, event: PointerEvent) => void} [onPointerDown]
+ * @param {(row: number, col: number, event: PointerEvent) => void} [onPointerMove]
+ */
+export function renderHitbox(parent, body, cells, ghost, who, onPointerDown, onPointerMove) {
+  const box = document.createElement("div");
+  box.className = `hitbox ${who}`;
+  box.dataset.hitbox = who;
+  for (let r = 0; r < body.length; r++) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "hitrow";
+    const row = body[r] ?? [];
+    for (let c = 0; c < row.length; c++) {
+      const cell = document.createElement("button");
+      cell.type = "button";
+      cell.className = "hitcell";
+      cell.dataset.r = String(r);
+      cell.dataset.c = String(c);
+      const on = row[c];
+      const living = Boolean(cells[r]?.[c]);
+      if (!on) {
+        cell.textContent = " ";
+        cell.classList.add("hole");
+        cell.setAttribute("aria-hidden", "true");
+        cell.tabIndex = -1;
+      } else if (living) {
+        cell.textContent = "#";
+        cell.classList.add("live");
+        cell.setAttribute("aria-label", `${who} cell ${r},${c} standing`);
+      } else {
+        cell.textContent = ".";
+        cell.classList.add("dead");
+        cell.setAttribute("aria-label", `${who} cell ${r},${c} hurt`);
+      }
+      if (ghost && stampCovers(ghost.mask, ghost.ar, ghost.ac, r, c)) cell.classList.add("ghost");
+      if (onPointerDown) {
+        cell.addEventListener("pointerdown", (event) => onPointerDown(r, c, event));
+      }
+      if (onPointerMove) {
+        cell.addEventListener("pointermove", (event) => onPointerMove(r, c, event));
+      }
+      rowEl.append(cell);
+    }
+    box.append(rowEl);
+  }
+  parent.append(box);
 }

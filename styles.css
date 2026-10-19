@@ -5,6 +5,11 @@ body {
   color: #d8d0c2;
 }
 
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
 .game-root {
   --bg: #14120e;
   --ink: #d8d0c2;
@@ -197,6 +202,67 @@ body {
   line-height: 1.2;
   white-space: pre;
   color: var(--ink);
+}
+
+.game-root .hitbox {
+  display: inline-block;
+  margin: 0.2rem 0 0.7rem;
+  touch-action: none;
+}
+
+.game-root .hitrow {
+  display: flex;
+}
+
+.game-root .hitcell {
+  width: 2.6rem;
+  height: 2.6rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #3a342c;
+  background: transparent;
+  color: var(--dim);
+  font: inherit;
+  font-family: ui-monospace, "Cascadia Mono", "Source Code Pro", Menlo, Consolas, monospace;
+  font-size: 1.2rem;
+  line-height: 2.6rem;
+  text-align: center;
+}
+
+.game-root .hitbox.you .hitcell.live {
+  color: var(--green);
+}
+
+.game-root .hitbox.foe .hitcell.live {
+  color: var(--red);
+}
+
+.game-root .hitcell.dead {
+  color: var(--dim);
+}
+
+.game-root .hitcell.hole {
+  color: transparent;
+  border-color: transparent;
+}
+
+.game-root .hitcell.ghost {
+  background: #3a2a12;
+  color: var(--orange);
+}
+
+.stamp-float {
+  position: fixed;
+  z-index: 5;
+  margin: 0;
+  pointer-events: none;
+  color: #ff8700;
+  font-family: ui-monospace, "Cascadia Mono", "Source Code Pro", Menlo, Consolas, monospace;
+  font-size: 1.1rem;
+  line-height: 1.1;
+  white-space: pre;
+  transform: translate(-0.4rem, -2.4rem);
 }
 
 .game-root .menu-btn,

@@ -1,10 +1,11 @@
-import { CARDS } from "./cards.js";
+import { CARDS, BODY } from "./cards.js";
 import { dungeonFromSave } from "./dungeon.js";
 import { TILES, ZONE_SIZE, zoneOf } from "./game.js";
+import { blankCells, cellsForHealth, cellsFromWounds, countMask, livingCount, maskFromLines, woundList } from "./shapes.js";
 import { SLEEP, advanceTime, clockLabel } from "./time.js";
 
 const KEY = "adventure-card-game:save";
-const VERSION = 2;
+const VERSION = 3;
 
 /** A bed. Pays for a full heal and for the save. */
 export const BED_COST = 2;
@@ -15,6 +16,7 @@ export const BED_COST = 2;
  *   x: number,
  *   y: number,
  *   health: number,
+ *   wounds: string[] | null,
  *   purse: number,
  *   deck: string[],
  *   turns: number,
@@ -58,7 +60,7 @@ function point(point) {
 function normalize(raw) {
   if (!raw || typeof raw !== "object") return null;
   const data = /** @type {Record<string, unknown>} */ (raw);
-  if (data.version !== 1 && data.version !== 2) return null;
+  if (data.version !== 1 && data.version !== 2 && data.version !== 3) return null;
   const village = point(data.village);
   const ruin = point(data.ruin);
   if (!isInt(data.x, 0, ZONE_SIZE - 1) || !isInt(data.y, 0, ZONE_SIZE - 1)) return null;
@@ -66,6 +68,15 @@ function normalize(raw) {
   if (!isInt(data.turns, 0, 1000000) || !isInt(data.lastEncounterTurn, -1, 1000000)) return null;
   if (!village || !ruin) return null;
   if (!cardIds(data.deck) || !cardIds(data.villageStock) || !cardIds(data.ruinLoot)) return null;
+  /** @type {string[] | null} */
+  let wounds = null;
+  if (data.version === 3 && Array.isArray(data.wounds)) {
+    const list = data.wounds;
+    if (list.length > 64 || !list.every((wound) => typeof wound === "string" && /^\d+,\d+$/.test(wound))) {
+      return null;
+    }
+    wounds = list.slice();
+  }
   if (!Array.isArray(data.monsters)) return null;
   /** @type {Save["monsters"]} */
   const monsters = [];
@@ -82,6 +93,7 @@ function normalize(raw) {
     x: data.x,
     y: data.y,
     health: data.health,
+    wounds,
     purse: data.purse,
     deck: /** @type {string[]} */ (data.deck).slice(),
     turns: data.turns,
@@ -171,7 +183,10 @@ function stampZone(game) {
 export function writeSaveInto(game, save) {
   game.player.x = save.x;
   game.player.y = save.y;
-  game.health = Math.min(game.healthMax, save.health);
+  const body = maskFromLines(BODY.you);
+  game.cells = save.wounds ? cellsFromWounds(body, save.wounds) : cellsForHealth(body, save.health);
+  game.health = livingCount(body, game.cells);
+  game.healthMax = countMask(body);
   game.purse = save.purse;
   game.deck = save.deck.slice();
   game.deckIndex = 0;
@@ -210,6 +225,7 @@ export function storeSave(game) {
     x: game.player.x,
     y: game.player.y,
     health: game.health,
+    wounds: woundList(maskFromLines(BODY.you), game.cells),
     purse: game.purse,
     deck: game.deck.slice(),
     turns: game.turns,
@@ -251,7 +267,10 @@ export function storeSave(game) {
 export function restAtInn(game) {
   if (game.purse < BED_COST) return { ok: false, message: "A bed is 2 coin." };
   game.purse -= BED_COST;
-  game.health = game.healthMax;
+  const body = maskFromLines(BODY.you);
+  game.cells = blankCells(body);
+  game.health = countMask(body);
+  game.healthMax = game.health;
   const newDay = advanceTime(game, SLEEP);
   const when = clockLabel(game.clock);
   const dayBit = newDay ? "A new day. The village sets out fresh goods. " : "";

@@ -1,11 +1,12 @@
-import { buyCard, canUseInField, cardById, castIntoRuin, craftSlots, deckWeight, isCraftedId, sellCard, sellPayout, siftRuin, uncraftCard, useFieldCard } from "./cards.js";
-import { applyDown, beginFight, claimSpoil, fleeFight, hpBar, playCombatCard, rollEncounter } from "./combat.js";
+import { BODY, buyCard, canUseInField, cardById, castIntoRuin, craftSlots, creatureById, deckWeight, isCraftedId, placeFieldHeal, sellCard, sellPayout, siftRuin, uncraftCard } from "./cards.js";
+import { applyDown, beginFight, claimSpoil, fleeFight, playCombatCard, rollEncounter } from "./combat.js";
 import { DUNGEON, dungeonName, foeKind, generateDungeon, moveInDungeon } from "./dungeon.js";
 import { KEYS, directionFromSwipe } from "./direction.js";
 import { TILES, createGame, groundName, tileAt, travel } from "./game.js";
-import { renderCard, renderCreature, renderMap, renderPlayer } from "./render.js";
+import { renderCard, renderCreature, renderHitbox, renderMap, renderPlayer } from "./render.js";
 import { controlLocked, loadSettings, saveSettings, toggleSetting } from "./settings.js";
 import { clearSave, readSave, restAtInn, savePresent, writeSaveInto } from "./save.js";
+import { clampAnchor, maskFromLines, pictureLines, rotateMask, stampCovers } from "./shapes.js";
 import { play, unlockAudio } from "./sound.js";
 import { advanceTime, clockLabel, dayOf, watchName } from "./time.js";
 
@@ -50,6 +51,11 @@ export function mount(root) {
   let bench = { a: null, b: null, c: null };
   /** @type {null | "a" | "b" | "c" | "uncraft"} */
   let craftPick = null;
+  /** @type {{ mode: "fight" | "heal", index: number, rot: number, ar: number, ac: number } | null} */
+  let aim = null;
+  /** @type {{ id: number, moved: boolean } | null} */
+  let drag = null;
+  let skipClick = false;
 
   root.classList.add("game-root");
   root.replaceChildren();
@@ -84,6 +90,8 @@ export function mount(root) {
     game = createGame();
     pending = null;
     sellPage = 0;
+    aim = null;
+    drag = null;
     draw();
   }
 
@@ -109,6 +117,9 @@ export function mount(root) {
     } else {
       craftPick = null;
     }
+    aim = null;
+    drag = null;
+    clearFloater();
     game.screen = screen;
     game.message = "";
     clearPending();
@@ -288,11 +299,221 @@ export function mount(root) {
     stage.append(panel);
   }
 
+  function youBody() {
+    return maskFromLines(BODY.you);
+  }
+
+  function aimStamp() {
+    if (!aim) return null;
+    const id = game.deck[aim.index];
+    if (!id) return null;
+    const card = cardById(id);
+    if (!card.shape) return null;
+    return rotateMask(maskFromLines(card.shape), aim.rot);
+  }
+
+  function aimBody() {
+    if (aim?.mode === "fight" && game.fight) return maskFromLines(creatureById(game.fight.creatureId).shape);
+    return youBody();
+  }
+
+  /** @param {number} ar @param {number} ac */
+  function moveAim(ar, ac) {
+    if (!aim) return;
+    const stamp = aimStamp();
+    if (!stamp) return;
+    const spot = clampAnchor(aimBody(), stamp, ar, ac);
+    aim.ar = spot.ar;
+    aim.ac = spot.ac;
+  }
+
+  /** @param {import("./game.js").Dir} dir */
+  function nudgeAim(dir) {
+    if (!aim) return;
+    const step = { n: [-1, 0], s: [1, 0], w: [0, -1], e: [0, 1] }[dir];
+    if (!step) return;
+    moveAim(aim.ar + step[0], aim.ac + step[1]);
+    draw();
+  }
+
+  function rotateAim() {
+    if (!aim) return;
+    aim.rot = (aim.rot + 1) % 4;
+    moveAim(aim.ar, aim.ac);
+    draw();
+  }
+
+  /** @param {number} x @param {number} y */
+  function moveFloater(x, y) {
+    const stamp = aimStamp();
+    if (!stamp) return;
+    let el = document.getElementById("stamp-float");
+    if (!el) {
+      el = document.createElement("pre");
+      el.id = "stamp-float";
+      el.className = "stamp-float";
+      root.append(el);
+    }
+    el.textContent = stamp.map((row) => row.map((on) => (on ? "#" : " ")).join("")).join("\n");
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+  }
+
+  function clearFloater() {
+    document.getElementById("stamp-float")?.remove();
+  }
+
+  function paintGhost() {
+    if (!aim) return;
+    const stamp = aimStamp();
+    const who = aim.mode === "heal" ? "you" : "foe";
+    const box = stage.querySelector(`[data-hitbox="${who}"]`);
+    if (!box || !stamp) return;
+    box.querySelectorAll("[data-r]").forEach((node) => {
+      if (!(node instanceof HTMLElement)) return;
+      const r = Number(node.dataset.r);
+      const c = Number(node.dataset.c);
+      node.classList.toggle("ghost", stampCovers(stamp, aim.ar, aim.ac, r, c));
+    });
+  }
+
+  /** @param {number} index */
+  function armFight(index) {
+    const id = game.deck[index];
+    const fight = game.fight;
+    if (!id || !fight) return;
+    const card = cardById(id);
+    const creature = creatureById(fight.creatureId);
+    if (card.tags.includes("metal") && creature.tags.includes("acid")) {
+      playCombatCard(game, index, null);
+      aim = null;
+      play("hit");
+      draw();
+      return;
+    }
+    if (!card.shape) return;
+    aim = { mode: "fight", index, rot: 0, ar: 0, ac: 0 };
+    moveAim(0, 0);
+    draw();
+  }
+
+  function commitStrike() {
+    if (!aim || aim.mode !== "fight" || !game.fight) return;
+    const place = { rot: aim.rot, ar: aim.ar, ac: aim.ac };
+    const index = aim.index;
+    aim = null;
+    clearFloater();
+    playCombatCard(game, index, place);
+    play("hit");
+    draw();
+  }
+
+  function commitHeal() {
+    if (!aim || aim.mode !== "heal") return;
+    const result = placeFieldHeal(game, aim.index, aim.rot, aim.ar, aim.ac);
+    game.message = result.message;
+    if (result.ok) aim = null;
+    play(result.ok ? "coin" : "bump");
+    draw();
+  }
+
+  /**
+   * Drag a combat card onto the foe hitbox. A tap only arms it.
+   * @param {HTMLButtonElement} btn
+   * @param {number} index
+   */
+  function watchCardDrag(btn, index) {
+    /** @type {{ x: number, y: number } | null} */
+    let start = null;
+    btn.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      const id = game.deck[index];
+      if (!id || !game.fight) return;
+      const card = cardById(id);
+      if (!card.shape) return;
+      const same = aim?.mode === "fight" && aim.index === index;
+      aim = {
+        mode: "fight",
+        index,
+        rot: same ? aim.rot : 0,
+        ar: same ? aim.ar : 0,
+        ac: same ? aim.ac : 0,
+      };
+      moveAim(aim.ar, aim.ac);
+      start = { x: event.clientX, y: event.clientY };
+      drag = { id: event.pointerId, moved: false };
+      skipClick = false;
+      try {
+        btn.setPointerCapture(event.pointerId);
+      } catch {
+        // Capture can fail. Moves still arrive while the pointer stays on the button.
+      }
+    });
+    btn.addEventListener("pointermove", (event) => {
+      if (!drag || drag.id !== event.pointerId || !aim || !start) return;
+      if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 8) drag.moved = true;
+      if (!drag.moved) return;
+      moveFloater(event.clientX, event.clientY);
+      const under = document.elementFromPoint(event.clientX, event.clientY);
+      const cell = under instanceof Element ? under.closest("[data-r]") : null;
+      if (!(cell instanceof HTMLElement) || cell.dataset.r == null || cell.dataset.c == null) return;
+      if (cell.closest("[data-hitbox]")?.getAttribute("data-hitbox") !== "foe") return;
+      moveAim(Number(cell.dataset.r), Number(cell.dataset.c));
+      paintGhost();
+    });
+    btn.addEventListener("pointerup", (event) => {
+      if (!drag || drag.id !== event.pointerId) return;
+      const moved = drag.moved;
+      drag = null;
+      start = null;
+      clearFloater();
+      if (!moved) return;
+      skipClick = true;
+      const under = document.elementFromPoint(event.clientX, event.clientY);
+      const onFoe = under instanceof Element && under.closest("[data-hitbox='foe']");
+      if (onFoe) commitStrike();
+      else draw();
+    });
+  }
+
   function drawDeck() {
     const panel = panelEl("DECK");
     line(panel, `${game.deck.length} cards | weight ${deckWeight(game.deck)} | ${game.purse} coin`, "c-yellow");
     line(panel, `Health ${game.health} / ${game.healthMax}`, "c-green");
+    for (const row of pictureLines(youBody(), game.cells)) line(panel, row, "c-green");
     if (game.message) line(panel, game.message, "c-orange");
+    if (aim?.mode === "heal") {
+      const stamp = aimStamp();
+      line(panel, "Lay the shape on hurt cells. R turns it.", "c-dim");
+      renderHitbox(
+        panel,
+        youBody(),
+        game.cells,
+        stamp ? { mask: stamp, ar: aim.ar, ac: aim.ac } : null,
+        "you",
+        (r, c, event) => {
+          event.preventDefault();
+          moveAim(r, c);
+          paintGhost();
+        },
+        (r, c, event) => {
+          if (event.buttons !== 1) return;
+          moveAim(r, c);
+          paintGhost();
+        },
+      );
+      panel.append(
+        button("R  Turn", () => rotateAim()),
+        button("1  Place", () => commitHeal()),
+        button("0  Cancel", () => {
+          aim = null;
+          game.message = "";
+          draw();
+        }),
+      );
+      stage.append(panel);
+      return;
+    }
     if (game.deck.length === 0) {
       line(panel, "Your deck is empty.");
     } else {
@@ -316,7 +537,14 @@ export function mount(root) {
       if (id && canUseInField(id)) {
         panel.append(
           button("1  Use", () => {
-            game.message = useFieldCard(game, game.deckIndex).message;
+            if (game.health >= game.healthMax) {
+              game.message = "You are already well.";
+              draw();
+              return;
+            }
+            aim = { mode: "heal", index: game.deckIndex, rot: 0, ar: 0, ac: 0 };
+            moveAim(0, 0);
+            game.message = "";
             draw();
           }),
         );
@@ -441,6 +669,7 @@ export function mount(root) {
     const panel = panelEl("INN");
     line(panel, "A bed, a fire, and a book with your name.", "c-dim");
     line(panel, `Health ${game.health} / ${game.healthMax}`, "c-green");
+    for (const row of pictureLines(youBody(), game.cells)) line(panel, row, "c-green");
     line(panel, `Purse ${game.purse} coin`, "c-yellow");
     line(panel, "A bed is 2 coin. It fills your health, and the inn remembers you.", "c-dim");
     if (game.message) line(panel, game.message, "c-orange");
@@ -721,22 +950,59 @@ export function mount(root) {
     }
     const panel = panelEl("FIGHT");
     renderCreature(panel, fight);
-    line(panel, `You  ${hpBar(game.health, game.healthMax)}  ${game.health}`, "c-white");
+    const foeBody = maskFromLines(creatureById(fight.creatureId).shape);
+    const stamp = aim?.mode === "fight" ? aimStamp() : null;
+    renderHitbox(
+      panel,
+      foeBody,
+      fight.cells,
+      stamp ? { mask: stamp, ar: aim?.ar ?? 0, ac: aim?.ac ?? 0 } : null,
+      "foe",
+      (r, c, event) => {
+        if (!aim || aim.mode !== "fight") return;
+        event.preventDefault();
+        moveAim(r, c);
+        paintGhost();
+      },
+      (r, c, event) => {
+        if (!aim || aim.mode !== "fight" || event.buttons !== 1) return;
+        moveAim(r, c);
+        paintGhost();
+      },
+    );
+    line(panel, `You  ${game.health} / ${game.healthMax}`, "c-white");
+    renderHitbox(panel, youBody(), game.cells, null, "you");
     for (const entry of fight.log) line(panel, entry, "c-orange");
 
     if (fight.phase === "choose") {
-      const choices = combatChoices();
-      if (choices.length === 0) line(panel, "You have nothing that will fight.", "c-dim");
-      choices.forEach((entry, number) => {
+      if (aim?.mode === "fight") {
+        const armed = game.deck[aim.index];
+        const name = armed ? cardById(armed).name : "That card";
+        line(panel, `${name}. R turns it. Drop it on them, or Strike.`, "c-dim");
         panel.append(
-          button(`${number + 1}  ${padName(entry.card.name)} harm ${entry.card.damage}`, () => {
-            playCombatCard(game, entry.index);
-            play("hit");
+          button("R  Turn", () => rotateAim()),
+          button("Strike", () => commitStrike()),
+          button("X  Put it down", () => {
+            aim = null;
             draw();
           }),
         );
+      }
+      const choices = combatChoices();
+      if (choices.length === 0) line(panel, "You have nothing that will fight.", "c-dim");
+      choices.forEach((entry, number) => {
+        const btn = button(`${number + 1}  ${padName(entry.card.name)} harm ${entry.card.damage}`, () => {
+          if (skipClick) {
+            skipClick = false;
+            return;
+          }
+          armFight(entry.index);
+        });
+        watchCardDrag(btn, entry.index);
+        panel.append(btn);
       });
       panel.append(button("0  Flee", () => {
+        aim = null;
         fleeFight(game);
         play("bump");
         draw();
@@ -830,7 +1096,9 @@ export function mount(root) {
     if (game.screen === "menu") hint.textContent = forgetting
       ? "Yes forgets the inn and starts the zone over."
       : "Deck, craft, you, settings, or clear the save.";
-    else if (game.screen === "deck") hint.textContent = "Bread, herbs, and a potion can be used from here.";
+    else if (game.screen === "deck") hint.textContent = aim?.mode === "heal"
+      ? "Drag the shape onto hurt cells. R turns it. Place eats the card."
+      : "Bread, herbs, and a potion can be laid on hurt cells.";
     else if (game.screen === "craft") {
       hint.textContent = craftPick === "uncraft"
         ? "A made card comes apart into its reagents."
@@ -842,7 +1110,7 @@ export function mount(root) {
     else if (game.screen === "trade") hint.textContent = "Leave when you are done. The inn keeps a bed.";
     else if (game.screen === "inn") hint.textContent = "A bed is 2 coin. Resting is the save.";
     else if (game.screen === "you") hint.textContent = "This card is you.";
-    else if (game.screen === "fight") hint.textContent = "Strike the creature card, or flee and take one hit.";
+    else if (game.screen === "fight") hint.textContent = "Drag a card onto the hitbox. R turns it. 0 flees and takes one hit.";
     else if (game.screen === "ruin" && game.layer === "dungeon") hint.textContent = "Sift or cast, then leave. You are still in the ruin.";
     else if (game.screen === "over") hint.textContent = "The trip is over. Nothing was saved.";
     else hint.textContent = "Step off the ruin when you are done.";
@@ -891,20 +1159,37 @@ export function mount(root) {
     if (!fight) return;
     if (fight.phase === "choose") {
       if (key === "0" || key === "Escape") {
+        aim = null;
         fleeFight(game);
         play("bump");
         draw();
         return;
       }
+      if (aim?.mode === "fight") {
+        const dir = KEYS[key];
+        if (dir) {
+          nudgeAim(dir);
+          return;
+        }
+        if (key === "r" || key === "R") {
+          rotateAim();
+          return;
+        }
+        if (key === "Enter") {
+          commitStrike();
+          return;
+        }
+        if (key === "x" || key === "X") {
+          aim = null;
+          draw();
+          return;
+        }
+      }
       const digit = Number(key);
       const choices = combatChoices();
       if (digit >= 1 && digit <= choices.length) {
         const choice = choices[digit - 1];
-        if (choice) {
-          playCombatCard(game, choice.index);
-          play("hit");
-        }
-        draw();
+        if (choice) armFight(choice.index);
       }
       return;
     }
@@ -967,6 +1252,12 @@ export function mount(root) {
       event.preventDefault();
       if (game.screen === "fight") {
         onFightKey("0");
+        return;
+      }
+      if (aim?.mode === "heal") {
+        aim = null;
+        game.message = "";
+        draw();
         return;
       }
       if (pending) {
@@ -1070,6 +1361,22 @@ export function mount(root) {
     }
 
     if (game.screen === "deck") {
+      if (aim?.mode === "heal") {
+        const dir = KEYS[event.key];
+        if (dir) {
+          event.preventDefault();
+          nudgeAim(dir);
+          return;
+        }
+        if (event.key === "r" || event.key === "R") {
+          rotateAim();
+          return;
+        }
+        if (event.key === "Enter" || event.key === "1") {
+          commitHeal();
+        }
+        return;
+      }
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         if (game.deck.length) game.deckIndex = (game.deckIndex - 1 + game.deck.length) % game.deck.length;
@@ -1081,7 +1388,14 @@ export function mount(root) {
       } else if (event.key === "1") {
         const id = game.deck[game.deckIndex];
         if (id && canUseInField(id)) {
-          game.message = useFieldCard(game, game.deckIndex).message;
+          if (game.health >= game.healthMax) {
+            game.message = "You are already well.";
+            draw();
+            return;
+          }
+          aim = { mode: "heal", index: game.deckIndex, rot: 0, ar: 0, ac: 0 };
+          moveAim(0, 0);
+          game.message = "";
           draw();
         }
       }
@@ -1089,6 +1403,7 @@ export function mount(root) {
     }
 
     if (game.screen === "fight") {
+      if (KEYS[event.key] || event.key === "Enter") event.preventDefault();
       onFightKey(event.key);
       return;
     }

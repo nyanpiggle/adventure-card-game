@@ -1,7 +1,8 @@
-import { cardById, creatureById } from "./cards.js";
-import { TILES, ZONE_SIZE, travelScreen, zoneOf } from "./game.js";
+import { cardById, creatureById, BODY } from "./cards.js";
+import { TILES, travelScreen, zoneOf } from "./game.js";
 import { clearDungeonFoe } from "./dungeon.js";
 import { readSave, writeSaveInto } from "./save.js";
+import { bestHurt, livingCount, maskFromLines, rotateMask, scratchCell, stampCells, blankCells, countMask } from "./shapes.js";
 import { wolfChance } from "./time.js";
 
 /** Random overworld fights. Not used for a monster you step on. */
@@ -36,11 +37,13 @@ export function rollEncounter(game, ground, rng = Math.random) {
  */
 export function beginFight(game, creatureId, randomEncounter) {
   const creature = creatureById(creatureId);
+  const body = maskFromLines(creature.shape);
   game.fight = {
     creatureId,
     name: creature.name,
-    health: creature.health,
-    healthMax: creature.health,
+    health: countMask(body),
+    healthMax: countMask(body),
+    cells: blankCells(body),
     deck: [...creature.deck],
     phase: "choose",
     log: [`A ${creature.name.toLowerCase()} is on you.`],
@@ -53,32 +56,49 @@ export function beginFight(game, creatureId, randomEncounter) {
 
 /**
  * @param {import("./game.js").Game} game
+ */
+function syncYou(game) {
+  const body = maskFromLines(BODY.you);
+  game.health = livingCount(body, game.cells);
+  game.healthMax = countMask(body);
+}
+
+/**
+ * The creature lays its shape where it cuts the most. An empty deck scratches one cell.
+ * @param {import("./game.js").Game} game
  * @returns {string}
  */
 function creatureStrike(game) {
   const fight = game.fight;
   if (!fight) return "";
+  const body = maskFromLines(BODY.you);
   const id = fight.deck.shift();
   if (!id) {
-    game.health -= 1;
-    return `${fight.name} scratches you for 1.`;
+    const hit = scratchCell(body, game.cells);
+    game.cells = hit.cells;
+    syncYou(game);
+    return `${fight.name} scratches you.`;
   }
   fight.deck.push(id);
   const card = cardById(id);
-  const harm = card.damage;
-  game.health -= harm;
-  if (harm === 0) return `${fight.name} fumbles ${card.name}.`;
-  return `${fight.name} uses ${card.name} for ${harm}.`;
+  if (!card.shape) return `${fight.name} fumbles ${card.name}.`;
+  const best = bestHurt(body, game.cells, maskFromLines(card.shape));
+  game.cells = best.cells;
+  syncYou(game);
+  if (best.changed === 0) return `${fight.name} misses with ${card.name}.`;
+  return `${fight.name} uses ${card.name} and cuts ${best.changed}.`;
 }
 
 /**
  * Strike the creature card with a combat or both card.
  * Metal against an acid creature is destroyed and deals no harm.
+ * Otherwise the stamp is laid at `place`. Cells that miss do nothing.
  * A dead creature does not strike back.
  * @param {import("./game.js").Game} game
  * @param {number} index
+ * @param {{ rot: number, ar: number, ac: number } | null} place
  */
-export function playCombatCard(game, index) {
+export function playCombatCard(game, index, place) {
   const fight = game.fight;
   if (!fight || fight.phase !== "choose") return;
   const id = game.deck[index];
@@ -95,9 +115,15 @@ export function playCombatCard(game, index) {
     game.deck.splice(index, 1);
     if (game.deckIndex >= game.deck.length) game.deckIndex = Math.max(0, game.deck.length - 1);
     log.push(`The acid eats ${card.name}. It deals no harm.`);
+  } else if (!card.shape || !place) {
+    log.push(`${card.name} misses.`);
   } else {
-    fight.health -= card.damage;
-    log.push(`${card.name} strikes for ${card.damage}.`);
+    const body = maskFromLines(creature.shape);
+    const stamp = rotateMask(maskFromLines(card.shape), place.rot);
+    const hit = stampCells(body, fight.cells, stamp, place.ar, place.ac, "hurt");
+    fight.cells = hit.cells;
+    fight.health = livingCount(body, fight.cells);
+    log.push(hit.changed ? `${card.name} cuts ${hit.changed}.` : `${card.name} misses.`);
   }
   if (fight.health <= 0) {
     fight.health = 0;
@@ -194,13 +220,4 @@ function clearMonsterHere(game) {
   monster.alive = false;
   const row = zoneOf(game)[y];
   if (row && row[x] === monster.symbol) row[x] = TILES.empty;
-}
-
-/**
- * @param {number} current
- * @param {number} max
- */
-export function hpBar(current, max) {
-  const filled = Math.max(0, Math.min(max, current));
-  return "#".repeat(filled) + ".".repeat(Math.max(0, max - filled));
 }

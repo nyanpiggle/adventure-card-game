@@ -1,8 +1,11 @@
 /**
  * Card catalog. Stats live here, not in the save.
  * The deck stores ids only. Pictures live in art.js, not on the card.
- * `value` is the price. `damage` is the harm in a fight. They are not the same number.
+ * `value` is the price. `damage` is how many cells the strike shape holds.
+ * They are not the same number. A heal card has damage 0 and a shape that
+ * restores cells instead.
  */
+import { countLines, livingCount, maskFromLines, rotateMask, stampCells } from "./shapes.js";
 
 /**
  * @typedef {"combat" | "field" | "both"} CardUse
@@ -15,6 +18,7 @@
  *   use: CardUse,
  *   tags: string[],
  *   text: string,
+ *   shape: string[] | null,
  * }} Card
  */
 
@@ -25,10 +29,11 @@ export const CARDS = {
     name: "Walking Staff",
     weight: 2,
     value: 3,
-    damage: 2,
+    damage: countLines([" #", "#"]),
     use: "both",
     tags: ["wood"],
     text: "A plain staff. It walks with you, and it will do in a fight.",
+    shape: [" #", "#"],
   },
   bread: {
     id: "bread",
@@ -38,27 +43,30 @@ export const CARDS = {
     damage: 0,
     use: "field",
     tags: ["food"],
-    text: "Eat it out of a fight. It restores 4 health. It is not a weapon.",
+    text: "Eat it out of a fight. Lay its shape on hurt cells. It is not a weapon.",
+    shape: ["##", "##"],
   },
   knife: {
     id: "knife",
     name: "Belt Knife",
     weight: 1,
     value: 6,
-    damage: 3,
+    damage: countLines(["####"]),
     use: "combat",
     tags: ["metal", "attack"],
     text: "A short blade. Only useful when something is trying to bite you.",
+    shape: ["####"],
   },
   charm: {
     id: "charm",
     name: "Copper Charm",
     weight: 1,
     value: 8,
-    damage: 1,
+    damage: countLines(["#"]),
     use: "both",
     tags: ["trinket"],
     text: "Traders pay well for it. It is a weak thing to hit with.",
+    shape: ["#"],
   },
   rope: {
     id: "rope",
@@ -69,56 +77,62 @@ export const CARDS = {
     use: "field",
     tags: ["fiber"],
     text: "Hemp for pits and bundles. No use in a fight.",
+    shape: null,
   },
   torch: {
     id: "torch",
     name: "Pitch Torch",
     weight: 1,
     value: 5,
-    damage: 1,
+    damage: countLines(["#"]),
     use: "both",
     tags: ["fire"],
     text: "Worth more than the bruise it leaves. A poor club up close.",
+    shape: ["#"],
   },
   shard: {
     id: "shard",
     name: "Ashen Shard",
     weight: 1,
     value: 6,
-    damage: 1,
+    damage: countLines(["#"]),
     use: "combat",
     tags: ["stone", "attack"],
     text: "A shard of stone from the ruin wall. On its own it barely cuts.",
+    shape: ["#"],
   },
   fang: {
     id: "fang",
     name: "Fang",
     weight: 1,
     value: 4,
-    damage: 3,
+    damage: countLines(["#", "#", "#"]),
     use: "combat",
     tags: ["attack", "beast"],
     text: "A bite. Wolves carry these. It only works in a fight.",
+    shape: ["#", "#", "#"],
   },
   spit: {
     id: "spit",
     name: "Acid Spit",
     weight: 1,
     value: 3,
-    damage: 2,
+    damage: countLines(["##", "#"]),
     use: "combat",
     tags: ["attack", "acid"],
     text: "A gob of slime. Metal that strikes the slime is eaten instead.",
+    shape: ["##", "#"],
   },
   spear: {
     id: "spear",
     name: "Stone Spear",
     weight: 3,
     value: 8,
-    damage: 6,
+    damage: countLines(["  # ", "  # ", "####"]),
     use: "combat",
     tags: ["stone", "wood", "attack"],
     text: "An ashen shard lashed to a walking staff. It outfights both parts.",
+    shape: ["  # ", "  # ", "####"],
   },
   bottle: {
     id: "bottle",
@@ -129,6 +143,7 @@ export const CARDS = {
     use: "field",
     tags: ["container"],
     text: "An empty bottle from the village. It holds a draught, not a fight.",
+    shape: null,
   },
   herbs: {
     id: "herbs",
@@ -138,17 +153,19 @@ export const CARDS = {
     damage: 0,
     use: "field",
     tags: ["medicine"],
-    text: "Chew them out of a fight. They restore 4 health.",
+    text: "Chew them out of a fight. Lay the sprigs on hurt cells.",
+    shape: ["# ", " #", "# ", " #"],
   },
   firestaff: {
     id: "firestaff",
     name: "Staff of Fireballs",
     weight: 4,
     value: 20,
-    damage: 8,
+    damage: countLines([" ## ", "####", " ## "]),
     use: "combat",
     tags: ["fire", "attack"],
     text: "A spear and a copper charm, lit by a torch. It hits harder than the spear.",
+    shape: [" ## ", "####", " ## "],
   },
   potion: {
     id: "potion",
@@ -158,8 +175,19 @@ export const CARDS = {
     damage: 0,
     use: "field",
     tags: ["medicine"],
-    text: "Drink it out of a fight. It restores 7 health.",
+    text: "Drink it out of a fight. Its shape can cover your whole body.",
+    shape: ["##", "##", "##", "##"],
   },
+};
+
+/**
+ * Body shapes. The count of `#` is maximum health.
+ * @type {{ you: string[], wolf: string[], slime: string[] }}
+ */
+export const BODY = {
+  you: ["##", "##", "##", "##"],
+  wolf: ["###", "###"],
+  slime: [" # ", "###", " # "],
 };
 
 /**
@@ -169,7 +197,7 @@ export const CARDS = {
 export const PLAYER = {
   id: "you",
   name: "You",
-  healthMax: 8,
+  healthMax: countLines(BODY.you),
   text: "A traveller.",
 };
 
@@ -190,6 +218,7 @@ export const STARTING_LOOT = ["shard", "torch"];
  *   health: number,
  *   coin: number,
  *   deck: string[],
+ *   shape: string[],
  * }} Creature
  */
 
@@ -199,17 +228,19 @@ export const CREATURES = {
     id: "wolf",
     name: "Wolf",
     tags: ["beast"],
-    health: 6,
+    health: countLines(BODY.wolf),
     coin: 2,
     deck: ["fang", "fang"],
+    shape: BODY.wolf,
   },
   slime: {
     id: "slime",
     name: "Slime",
     tags: ["acid"],
-    health: 5,
+    health: countLines(BODY.slime),
     coin: 1,
     deck: ["spit", "spit"],
+    shape: BODY.slime,
   },
 };
 
@@ -372,26 +403,35 @@ export function buyCard(game, index) {
 }
 
 /**
- * Bread, herbs, and a potion restore health out of a fight. The card is eaten.
- * @param {{ health: number, healthMax: number, deck: string[], deckIndex: number }} game
+ * Lay a food or medicine shape on your body. Covered dead cells stand back up.
+ * A placement that covers nothing hurt spends nothing.
+ * @param {{ cells: number[][], health: number, healthMax: number, deck: string[], deckIndex: number }} game
  * @param {number} index
+ * @param {number} rot
+ * @param {number} ar
+ * @param {number} ac
  * @returns {{ ok: boolean, message: string }}
  */
-export function useFieldCard(game, index) {
+export function placeFieldHeal(game, index, rot, ar, ac) {
   if (index < 0 || index >= game.deck.length) {
     return { ok: false, message: "No such card." };
   }
   const id = game.deck[index];
   if (!id) return { ok: false, message: "No such card." };
   if (!canUseInField(id)) return { ok: false, message: "Nothing to do with that out here." };
+  const card = cardById(id);
+  if (!card.shape) return { ok: false, message: "Nothing to do with that out here." };
   if (game.health >= game.healthMax) return { ok: false, message: "You are already well." };
-  const amount = id === "potion" ? 7 : 4;
-  const gain = Math.min(amount, game.healthMax - game.health);
-  game.health += gain;
+  const body = maskFromLines(BODY.you);
+  const stamp = rotateMask(maskFromLines(card.shape), rot);
+  const hit = stampCells(body, game.cells, stamp, ar, ac, "heal");
+  if (hit.changed === 0) return { ok: false, message: "That covers nothing hurt." };
+  game.cells = hit.cells;
+  game.health = livingCount(body, game.cells);
   game.deck.splice(index, 1);
   clampDeckIndex(game);
   const verb = id === "potion" ? "drink the potion" : id === "herbs" ? "chew the herbs" : "eat the bread";
-  return { ok: true, message: `You ${verb} and gain ${gain} health.` };
+  return { ok: true, message: `You ${verb} and restore ${hit.changed}.` };
 }
 
 /**
