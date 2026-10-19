@@ -143,7 +143,7 @@ The Belt Knife's harm is 4, and Acid Spit's is 3. Both used to be one less. The 
 
 Open the deck from the game menu. A card is drawn as ASCII: a border, the name, a picture of 5 rows by 21 characters, the rules text, then use, tags, the shape if it has one, then harm or heal, value, and weight. The shop lists the price. A fight lists the harm, which is the size of the shape.
 
-Trail Bread, Rare Herbs, and a Healing Potion can be used from the deck. Using one lays its shape on your body. `#` on a hurt cell restores that cell. `#` on a standing cell, or off the body, does nothing. Bread and herbs are 4 cells. The potion is your whole body, 8 cells. The card is eaten only when at least one cell is restored. At full health they do nothing. A Glass Bottle cannot be used this way. Arrow keys move the shape. `R` turns it. You can also drag it. `1` or Enter places it.
+Trail Bread, Rare Herbs, and a Healing Potion can be used from the deck. Using one lays its shape on your body. `#` on a hurt cell restores that cell. `#` on a standing cell, or off the body, does nothing. Bread and herbs are 4 cells. The potion is your whole body, 8 cells. The card is eaten only when at least one cell is restored. At full health they do nothing. A Glass Bottle cannot be used this way. Arrow keys move the shape, including off the body so a tall shape can be centered. `R` turns it. You can also drag it. `1` or Enter places it.
 
 The shapes:
 
@@ -206,7 +206,7 @@ Stepping onto `S` starts a fight with that slime. A wolf can also stop you on op
 
 Health in a fight is the hitbox. A standing cell is `#`. A hurt cell is `.`. A hole in the shape, such as the corners of the slime, is a blank. You go down when none of your cells are left. The creature breaks when none of its cells are left.
 
-You play one card whose use is `combat` or `both`. Field cards cannot be played. A number, or a tap, arms the card. Its shape is laid on the creature's hitbox, top-left of the stamp on the cell you choose. Drag the card onto the hitbox to strike as you let go. Arrow keys nudge the stamp. `R` turns it a quarter turn clockwise. Strike or Enter swings. `X` puts the card down without swinging. Cells of the stamp that miss the body, or land on a cell that is already hurt, do nothing. A swing that cuts nothing is still your turn.
+You play one card whose use is `combat` or `both`. Field cards cannot be played. A number, or a tap, arms the card and centers its shape on the creature. The shape may hang off any side. Its top-left can sit above or west of the body, on a negative cell, so a long blade or the arms of a cross can be centered even when they are taller or wider than the health. The dim cells around the hitbox are that margin. A `#` drawn there is part of the weapon and cuts nothing. Drag onto a margin cell, or nudge with the arrows. `R` turns the shape a quarter turn clockwise. Strike or Enter swings. Dropping the card on the hitbox swings too. `X` puts the card down without swinging. Cells of the stamp that miss the body, or land on a cell that is already hurt, do nothing. A swing that cuts nothing is still your turn.
 
 A metal card played on an acid creature is eaten at once. You do not place it. It deals no harm. The Belt Knife against the slime is that trade.
 

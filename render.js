@@ -248,24 +248,34 @@ export function renderPlayer(parent, game) {
  * @param {"you" | "foe"} who
  * @param {(row: number, col: number, event: PointerEvent) => void} [onPointerDown]
  * @param {(row: number, col: number, event: PointerEvent) => void} [onPointerMove]
+ * @param {number} [pad] empty cells around the body, so a stamp can hang off
  */
-export function renderHitbox(parent, body, cells, ghost, who, onPointerDown, onPointerMove) {
+export function renderHitbox(parent, body, cells, ghost, who, onPointerDown, onPointerMove, pad = 0) {
   const box = document.createElement("div");
   box.className = `hitbox ${who}`;
   box.dataset.hitbox = who;
-  for (let r = 0; r < body.length; r++) {
+  const height = body.length;
+  const width = body.reduce((max, row) => Math.max(max, row.length), 0);
+  const margin = Math.max(0, pad);
+  for (let r = -margin; r < height + margin; r++) {
     const rowEl = document.createElement("div");
     rowEl.className = "hitrow";
-    const row = body[r] ?? [];
-    for (let c = 0; c < row.length; c++) {
+    for (let c = -margin; c < width + margin; c++) {
       const cell = document.createElement("button");
       cell.type = "button";
       cell.className = "hitcell";
       cell.dataset.r = String(r);
       cell.dataset.c = String(c);
-      const on = row[c];
+      const inside = r >= 0 && r < height && c >= 0 && c < (body[r]?.length ?? 0);
+      const on = inside && Boolean(body[r]?.[c]);
       const living = Boolean(cells[r]?.[c]);
-      if (!on) {
+      const covered = Boolean(ghost && stampCovers(ghost.mask, ghost.ar, ghost.ac, r, c));
+      if (!inside) {
+        cell.classList.add("margin");
+        cell.textContent = covered ? "#" : ".";
+        cell.tabIndex = -1;
+        cell.setAttribute("aria-hidden", "true");
+      } else if (!on) {
         cell.textContent = " ";
         cell.classList.add("hole");
         cell.setAttribute("aria-hidden", "true");
@@ -279,7 +289,7 @@ export function renderHitbox(parent, body, cells, ghost, who, onPointerDown, onP
         cell.classList.add("dead");
         cell.setAttribute("aria-label", `${who} cell ${r},${c} hurt`);
       }
-      if (ghost && stampCovers(ghost.mask, ghost.ar, ghost.ac, r, c)) cell.classList.add("ghost");
+      if (covered) cell.classList.add("ghost");
       if (onPointerDown) {
         cell.addEventListener("pointerdown", (event) => onPointerDown(r, c, event));
       }

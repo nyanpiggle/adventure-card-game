@@ -131,7 +131,10 @@ export function stampCells(body, cells, stamp, ar, ac, mode) {
 }
 
 /**
- * Keep the stamp where at least one of its rows or columns can still touch the body.
+ * The stamp may start above or west of the body. Negative anchors are how a
+ * shape bigger than the health is centered: the top and left of a cross can
+ * hang off while the middle sits on a cell. The bounding box still has to
+ * touch the body, so the stamp cannot be nudged into empty space forever.
  * @param {Mask} body
  * @param {Mask} stamp
  * @param {number} ar
@@ -146,6 +149,20 @@ export function clampAnchor(body, stamp, ar, ac) {
     ar: Math.max(1 - sh, Math.min(bh - 1, ar)),
     ac: Math.max(1 - sw, Math.min(bw - 1, ac)),
   };
+}
+
+/**
+ * Sit the stamp on the body with the overhang split to the top and the left.
+ * A shape taller or wider than the health starts on a negative cell.
+ * @param {Mask} body
+ * @param {Mask} stamp
+ */
+export function centerAnchor(body, stamp) {
+  const bh = body.length || 1;
+  const bw = body[0]?.length || 1;
+  const sh = stamp.length || 1;
+  const sw = stamp[0]?.length || 1;
+  return clampAnchor(body, stamp, Math.floor((bh - sh) / 2), Math.floor((bw - sw) / 2));
 }
 
 /**

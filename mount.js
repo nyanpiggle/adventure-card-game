@@ -6,7 +6,7 @@ import { TILES, createGame, groundName, tileAt, travel } from "./game.js";
 import { renderCard, renderCreature, renderHitbox, renderMap, renderPlayer } from "./render.js";
 import { controlLocked, loadSettings, saveSettings, toggleSetting } from "./settings.js";
 import { clearSave, readSave, restAtInn, savePresent, writeSaveInto } from "./save.js";
-import { clampAnchor, maskFromLines, pictureLines, rotateMask, stampCovers } from "./shapes.js";
+import { centerAnchor, clampAnchor, maskFromLines, pictureLines, rotateMask, stampCovers } from "./shapes.js";
 import { play, unlockAudio } from "./sound.js";
 import { advanceTime, clockLabel, dayOf, watchName } from "./time.js";
 
@@ -327,6 +327,15 @@ export function mount(root) {
     aim.ac = spot.ac;
   }
 
+  function centerAim() {
+    if (!aim) return;
+    const stamp = aimStamp();
+    if (!stamp) return;
+    const spot = centerAnchor(aimBody(), stamp);
+    aim.ar = spot.ar;
+    aim.ac = spot.ac;
+  }
+
   /** @param {import("./game.js").Dir} dir */
   function nudgeAim(dir) {
     if (!aim) return;
@@ -373,7 +382,9 @@ export function mount(root) {
       if (!(node instanceof HTMLElement)) return;
       const r = Number(node.dataset.r);
       const c = Number(node.dataset.c);
-      node.classList.toggle("ghost", stampCovers(stamp, aim.ar, aim.ac, r, c));
+      const covered = stampCovers(stamp, aim.ar, aim.ac, r, c);
+      node.classList.toggle("ghost", covered);
+      if (node.classList.contains("margin")) node.textContent = covered ? "#" : ".";
     });
   }
 
@@ -393,7 +404,7 @@ export function mount(root) {
     }
     if (!card.shape) return;
     aim = { mode: "fight", index, rot: 0, ar: 0, ac: 0 };
-    moveAim(0, 0);
+    centerAim();
     draw();
   }
 
@@ -439,7 +450,8 @@ export function mount(root) {
         ar: same ? aim.ar : 0,
         ac: same ? aim.ac : 0,
       };
-      moveAim(aim.ar, aim.ac);
+      if (same) moveAim(aim.ar, aim.ac);
+      else centerAim();
       start = { x: event.clientX, y: event.clientY };
       drag = { id: event.pointerId, moved: false };
       skipClick = false;
@@ -501,6 +513,7 @@ export function mount(root) {
           moveAim(r, c);
           paintGhost();
         },
+        stamp ? Math.max(stamp.length, stamp[0]?.length ?? 0) - 1 : 0,
       );
       panel.append(
         button("R  Turn", () => rotateAim()),
@@ -543,7 +556,7 @@ export function mount(root) {
               return;
             }
             aim = { mode: "heal", index: game.deckIndex, rot: 0, ar: 0, ac: 0 };
-            moveAim(0, 0);
+            centerAim();
             game.message = "";
             draw();
           }),
@@ -941,6 +954,18 @@ export function mount(root) {
       .filter((entry) => entry.card.use !== "field");
   }
 
+  /** Room around the body so a stamp can hang off the top and the left. */
+  function foePad() {
+    let n = 0;
+    for (const entry of combatChoices()) {
+      const shape = entry.card.shape;
+      if (!shape) continue;
+      const width = shape.reduce((max, row) => Math.max(max, row.length), 0);
+      n = Math.max(n, shape.length - 1, width - 1);
+    }
+    return n;
+  }
+
   function drawFight() {
     const fight = game.fight;
     if (!fight) {
@@ -969,6 +994,7 @@ export function mount(root) {
         moveAim(r, c);
         paintGhost();
       },
+      fight.phase === "choose" ? foePad() : 0,
     );
     line(panel, `You  ${game.health} / ${game.healthMax}`, "c-white");
     renderHitbox(panel, youBody(), game.cells, null, "you");
@@ -1394,7 +1420,7 @@ export function mount(root) {
             return;
           }
           aim = { mode: "heal", index: game.deckIndex, rot: 0, ar: 0, ac: 0 };
-          moveAim(0, 0);
+          centerAim();
           game.message = "";
           draw();
         }
