@@ -241,10 +241,6 @@ button,
   overflow: visible;
 }
 
-.game-root .hitcell.wall {
-  border-color: transparent;
-}
-
 .game-root .hitrow {
   display: flex;
 }

@@ -339,18 +339,18 @@ export function renderHitbox(parent, body, cells, ghost, who, onPointerDown, onP
  * @param {(row: number, col: number, event: PointerEvent) => void} [onPointerMove]
  */
 export function renderBattlefield(parent, you, foes, ghost, pad, onPointerDown, onPointerMove) {
-  const GAP = 2;
+  const GAP = 1;
   const sizeOf = (/** @type {boolean[][]} */ b) => ({ h: b.length, w: b.reduce((m, row) => Math.max(m, row.length), 0) });
   const ys = sizeOf(you.body);
   const fs = foes.map((f) => sizeOf(f.body));
   const tall = Math.max(ys.h, ...fs.map((s) => s.h));
-  // Column layout: left ground, you, gap, foe 0, wall, foe 1, ..., right ground.
-  const youCol = Math.max(1, pad - GAP - ys.w + 1) ;
+  // Column layout: left ground, you, gap, foe 0, gap, foe 1, ..., right ground.
+  const youCol = Math.max(0, pad - GAP - ys.w);
   /** @type {number[]} */
   const foeCol = [];
   let col = youCol + ys.w + GAP;
   fs.forEach((s, i) => {
-    if (i > 0) col += 1; // the | wall
+    if (i > 0) col += GAP; // empty ground between creatures
     foeCol.push(col);
     col += s.w;
   });
@@ -359,7 +359,6 @@ export function renderBattlefield(parent, you, foes, ghost, pad, onPointerDown, 
   const top = Math.max(1, pad - minTop);
   const floor = top + tall; // first row below the bodies
   const height = floor + Math.max(1, pad);
-  const wallCols = foeCol.slice(1).map((c) => c - 1);
 
   const grid = document.createElement("div");
   grid.className = "battlefield";
@@ -384,7 +383,7 @@ export function renderBattlefield(parent, you, foes, ghost, pad, onPointerDown, 
     el.style.gridColumn = `${c + 1} / span ${span}`;
     grid.append(el);
   };
-  label(you.label, you.cls, youCol, ys.w + GAP);
+  label(you.label, you.cls, 0, youCol + ys.w + GAP);
   foes.forEach((f, i) => label(f.label, f.cls, foeCol[i], fs[i].w + 1));
 
   for (let R = 0; R < height; R++) {
@@ -394,13 +393,6 @@ export function renderBattlefield(parent, you, foes, ghost, pad, onPointerDown, 
         el.style.gridColumn = String(C + 1);
         into.append(el);
       };
-      if (wallCols.includes(C)) {
-        const wall = document.createElement("div");
-        wall.className = "hitcell wall c-dim";
-        wall.textContent = "|";
-        place(wall, grid);
-        continue;
-      }
       const yr = R - (floor - ys.h);
       const yc = C - youCol;
       const onYou = yr >= 0 && yr < ys.h && yc >= 0 && yc < (you.body[yr]?.length ?? 0) && Boolean(you.body[yr]?.[yc]);

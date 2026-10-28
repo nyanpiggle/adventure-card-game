@@ -987,9 +987,9 @@ export function mount(root) {
     const pad = fight.phase === "choose" ? foePad() : 0;
     renderBattlefield(
       panel,
-      { label: `Player  ${game.health} / ${game.healthMax}`, cls: "c-white", body: youBody(), cells: game.cells },
+      { label: "Player", cls: "c-white", body: youBody(), cells: game.cells },
       foes.map((foe) => ({
-        label: `${foe.name}  ${Math.max(0, foe.health)} / ${foe.healthMax}`,
+        label: foe.name,
         cls: "c-red",
         body: maskFromLines(creatureById(foe.creatureId).shape),
         cells: foe.cells,
