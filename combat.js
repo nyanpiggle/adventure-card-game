@@ -1,21 +1,35 @@
 import { cardById, creatureById, BODY } from "./cards.js";
 import { TILES, travelScreen, zoneOf } from "./game.js";
-import { clearDungeonFoe } from "./dungeon.js";
+import { clearDungeonFoe, clearPack } from "./dungeon.js";
 import { readSave, writeSaveInto } from "./save.js";
-import { bestHurt, livingCount, maskFromLines, rotateMask, scratchCell, stampCells, blankCells, countMask } from "./shapes.js";
-import { wolfChance } from "./time.js";
+import {
+  bestHurt,
+  countMask,
+  joinBodies,
+  livingCount,
+  maskFromLines,
+  rotateMask,
+  scratchCell,
+  stampCells,
+  stampCovers,
+} from "./shapes.js";
+import { watchName, wolfChance } from "./time.js";
 
 /** Random overworld fights. Not used for a monster you step on. */
 export const ENCOUNTER_CHANCE = 0.1;
 export const ENCOUNTER_COOLDOWN = 5;
 
+/** A fight shows at most two bodies. A third would crowd the ground column. */
+const PACK_CAP = 2;
+
 /**
  * Plains only, and only on open ground. Cooldown starts after a random fight,
  * not after a miss. The roll does not change the game.
+ * At night the wolf brings a second wolf. Other watches are still one.
  * @param {import("./game.js").Game} game
  * @param {string} ground
  * @param {() => number} [rng]
- * @returns {"wolf" | null}
+ * @returns {string[] | null}
  */
 export function rollEncounter(game, ground, rng = Math.random) {
   if (game.biome !== "plains") return null;
@@ -27,36 +41,122 @@ export function rollEncounter(game, ground, rng = Math.random) {
     return null;
   }
   if (rng() >= wolfChance(game.clock)) return null;
-  return "wolf";
+  if (watchName(game.clock) === "night") return ["wolf", "wolf"];
+  return ["wolf"];
+}
+
+/**
+ * @param {string[]} ids
+ */
+function openLine(ids) {
+  const names = ids.map((id) => creatureById(id).name.toLowerCase());
+  if (names.length <= 1) return `A ${names[0] ?? "creature"} is on you.`;
+  if (names[0] === names[1]) {
+    if (names[0] === "wolf") return "Two wolves are on you.";
+    return `Two ${names[0]}s are on you.`;
+  }
+  return `A ${names[0]} and a ${names[1]} are on you.`;
+}
+
+/**
+ * @param {import("./game.js").Fight} fight
+ */
+function packPhrase(fight) {
+  const first = fight.foes[0];
+  const second = fight.foes[1];
+  if (!first) return "them";
+  if (!second) return `the ${first.name.toLowerCase()}`;
+  if (first.creatureId === second.creatureId) {
+    return first.name.toLowerCase() === "wolf" ? "the wolves" : `the ${first.name.toLowerCase()}s`;
+  }
+  return `the ${first.name.toLowerCase()} and the ${second.name.toLowerCase()}`;
+}
+
+/**
+ * @param {import("./game.js").Fight} fight
+ * @param {number} index
+ */
+function foeLabel(fight, index) {
+  const foe = fight.foes[index];
+  if (!foe) return "It";
+  const twins = fight.foes.filter((other) => other.creatureId === foe.creatureId).length > 1;
+  if (!twins) return foe.name;
+  return index === 0 ? `The west ${foe.name.toLowerCase()}` : `The east ${foe.name.toLowerCase()}`;
+}
+
+/**
+ * @param {import("./game.js").Fight} fight
+ * @param {import("./game.js").Foe} foe
+ */
+function foeLiving(fight, foe) {
+  let n = 0;
+  for (let r = 0; r < foe.height; r++) {
+    for (let c = 0; c < foe.width; c++) {
+      const y = foe.originR + r;
+      const x = foe.originC + c;
+      if (fight.body[y]?.[x] && fight.cells[y]?.[x]) n += 1;
+    }
+  }
+  return n;
+}
+
+/** @param {import("./game.js").Fight} fight */
+function syncFight(fight) {
+  let total = 0;
+  for (const foe of fight.foes) {
+    foe.health = foeLiving(fight, foe);
+    total += foe.health;
+  }
+  fight.health = total;
 }
 
 /**
  * @param {import("./game.js").Game} game
- * @param {string} creatureId
+ * @param {string | string[]} creatureIds
  * @param {boolean} randomEncounter
+ * @param {{ x: number, y: number }[]} [tiles]
  */
-export function beginFight(game, creatureId, randomEncounter) {
-  const creature = creatureById(creatureId);
-  const body = maskFromLines(creature.shape);
+export function beginFight(game, creatureIds, randomEncounter, tiles = []) {
+  const ids = (Array.isArray(creatureIds) ? creatureIds : [creatureIds]).slice(0, PACK_CAP);
+  if (ids.length === 0) return;
+  const creatures = ids.map((id) => creatureById(id));
+  const joined = joinBodies(creatures.map((creature) => maskFromLines(creature.shape)));
+  /** @type {import("./game.js").Foe[]} */
+  const foes = creatures.map((creature, index) => {
+    const place = joined.places[index];
+    const healthMax = countMask(maskFromLines(creature.shape));
+    return {
+      creatureId: creature.id,
+      name: creature.name,
+      deck: [...creature.deck],
+      originR: place?.originR ?? 0,
+      originC: place?.originC ?? 0,
+      width: place?.width ?? 0,
+      height: place?.height ?? 0,
+      health: healthMax,
+      healthMax,
+    };
+  });
+  const healthMax = countMask(joined.body);
   game.fight = {
-    creatureId,
-    name: creature.name,
-    health: countMask(body),
-    healthMax: countMask(body),
-    cells: blankCells(body),
-    deck: [...creature.deck],
+    foes,
+    body: joined.body,
+    wall: joined.wall,
+    cells: joined.cells,
+    health: healthMax,
+    healthMax,
+    deck: foes.flatMap((foe) => foe.deck.slice()),
     phase: "choose",
-    log: [`A ${creature.name.toLowerCase()} is on you.`],
+    log: [openLine(ids)],
     random: randomEncounter,
+    tiles: tiles.slice(),
   };
   if (randomEncounter) game.lastEncounterTurn = game.turns;
   game.screen = "fight";
   game.message = "";
 }
 
-/**
- * @param {import("./game.js").Game} game
- */
+/** @param {import("./game.js").Game} game */
 function syncYou(game) {
   const body = maskFromLines(BODY.you);
   game.health = livingCount(body, game.cells);
@@ -64,36 +164,86 @@ function syncYou(game) {
 }
 
 /**
- * The creature lays its shape where it cuts the most. An empty deck scratches one cell.
+ * Metal on a fight where every creature still up is acid is eaten before you place it.
+ * @param {import("./game.js").Fight} fight
+ * @param {{ tags: string[] }} card
+ */
+export function metalWasted(fight, card) {
+  if (!card.tags.includes("metal")) return false;
+  const living = fight.foes.filter((foe) => foe.health > 0);
+  return living.length > 0 && living.every((foe) => creatureById(foe.creatureId).tags.includes("acid"));
+}
+
+/**
+ * @param {import("./game.js").Fight} fight
+ * @param {import("./game.js").Foe} foe
+ * @param {boolean[][]} stamp
+ * @param {number} ar
+ * @param {number} ac
+ */
+function stampTouches(fight, foe, stamp, ar, ac) {
+  for (let r = 0; r < foe.height; r++) {
+    for (let c = 0; c < foe.width; c++) {
+      const y = foe.originR + r;
+      const x = foe.originC + c;
+      if (!fight.body[y]?.[x]) continue;
+      if (stampCovers(stamp, ar, ac, y, x)) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * One creature lays its shape where it cuts the most. An empty deck scratches one cell.
  * @param {import("./game.js").Game} game
+ * @param {import("./game.js").Foe} foe
+ * @param {string} label
  * @returns {string}
  */
-function creatureStrike(game) {
-  const fight = game.fight;
-  if (!fight) return "";
+function foeStrike(game, foe, label) {
   const body = maskFromLines(BODY.you);
-  const id = fight.deck.shift();
+  const id = foe.deck.shift();
   if (!id) {
     const hit = scratchCell(body, game.cells);
     game.cells = hit.cells;
     syncYou(game);
-    return `${fight.name} scratches you.`;
+    return `${label} scratches you.`;
   }
-  fight.deck.push(id);
+  foe.deck.push(id);
   const card = cardById(id);
-  if (!card.shape) return `${fight.name} fumbles ${card.name}.`;
+  if (!card.shape) return `${label} fumbles ${card.name}.`;
   const best = bestHurt(body, game.cells, maskFromLines(card.shape));
   game.cells = best.cells;
   syncYou(game);
-  if (best.changed === 0) return `${fight.name} misses with ${card.name}.`;
-  return `${fight.name} uses ${card.name} and cuts ${best.changed}.`;
+  if (best.changed === 0) return `${label} misses with ${card.name}.`;
+  return `${label} uses ${card.name} and cuts ${best.changed}.`;
 }
 
 /**
- * Strike the creature card with a combat or both card.
- * Metal against an acid creature is destroyed and deals no harm.
- * Otherwise the stamp is laid at `place`. Cells that miss do nothing.
- * A dead creature does not strike back.
+ * Living foes strike from the west. A foe with no cells left does not swing.
+ * If one of them drops you, the rest do not.
+ * @param {import("./game.js").Game} game
+ * @returns {string[]}
+ */
+function enemiesStrike(game) {
+  const fight = game.fight;
+  if (!fight) return [];
+  /** @type {string[]} */
+  const lines = [];
+  for (let index = 0; index < fight.foes.length; index++) {
+    if (game.health <= 0) break;
+    const foe = fight.foes[index];
+    if (!foe || foeLiving(fight, foe) <= 0) continue;
+    lines.push(foeStrike(game, foe, foeLabel(fight, index)));
+  }
+  return lines;
+}
+
+/**
+ * Strike the shared hitbox with a combat or both card.
+ * Metal against an all-acid fight is eaten before you place it.
+ * Metal whose stamp covers an acid body is eaten and cuts nothing, wolf included.
+ * A dead foe does not strike back. The others do.
  * @param {import("./game.js").Game} game
  * @param {number} index
  * @param {{ rot: number, ar: number, ac: number } | null} place
@@ -110,29 +260,41 @@ export function playCombatCard(game, index, place) {
   }
   /** @type {string[]} */
   const log = [];
-  const creature = creatureById(fight.creatureId);
-  if (card.tags.includes("metal") && creature.tags.includes("acid")) {
+  const stamp = card.shape && place ? rotateMask(maskFromLines(card.shape), place.rot) : null;
+  const eaten =
+    metalWasted(fight, card) ||
+    Boolean(
+      stamp &&
+        place &&
+        card.tags.includes("metal") &&
+        fight.foes.some(
+          (foe) => creatureById(foe.creatureId).tags.includes("acid") && stampTouches(fight, foe, stamp, place.ar, place.ac),
+        ),
+    );
+  if (eaten) {
     game.deck.splice(index, 1);
     if (game.deckIndex >= game.deck.length) game.deckIndex = Math.max(0, game.deck.length - 1);
     log.push(`The acid eats ${card.name}. It deals no harm.`);
-  } else if (!card.shape || !place) {
+  } else if (!stamp || !place) {
     log.push(`${card.name} misses.`);
   } else {
-    const body = maskFromLines(creature.shape);
-    const stamp = rotateMask(maskFromLines(card.shape), place.rot);
-    const hit = stampCells(body, fight.cells, stamp, place.ar, place.ac, "hurt");
+    const before = fight.foes.map((foe) => foeLiving(fight, foe));
+    const hit = stampCells(fight.body, fight.cells, stamp, place.ar, place.ac, "hurt");
     fight.cells = hit.cells;
-    fight.health = livingCount(body, fight.cells);
+    syncFight(fight);
     log.push(hit.changed ? `${card.name} cuts ${hit.changed}.` : `${card.name} misses.`);
+    fight.foes.forEach((foe, foeIndex) => {
+      if ((before[foeIndex] ?? 0) > 0 && foe.health <= 0) log.push(`${foeLabel(fight, foeIndex)} breaks.`);
+    });
   }
   if (fight.health <= 0) {
     fight.health = 0;
     fight.phase = "won";
-    log.push(`${fight.name} breaks.`);
+    fight.deck = fight.foes.flatMap((foe) => foe.deck.slice());
     fight.log = log;
     return;
   }
-  log.push(creatureStrike(game));
+  log.push(...enemiesStrike(game));
   if (game.health <= 0) {
     game.health = 0;
     fight.phase = "lost";
@@ -144,23 +306,23 @@ export function playCombatCard(game, index, place) {
 }
 
 /**
- * Leaving still lets the creature strike once.
+ * Leaving still lets every living foe strike once, from the west.
  * @param {import("./game.js").Game} game
  */
 export function fleeFight(game) {
   const fight = game.fight;
   if (!fight || fight.phase !== "choose") return;
-  const line = creatureStrike(game);
+  const lines = enemiesStrike(game);
   if (game.health <= 0) {
     game.health = 0;
     fight.phase = "lost";
-    fight.log = [line, "You go down."];
+    fight.log = [...lines, "You go down."];
     return;
   }
-  const name = fight.name;
+  const who = packPhrase(fight);
   game.fight = null;
   game.screen = travelScreen(game);
-  game.message = `${line} You break away from the ${name.toLowerCase()}.`;
+  game.message = `${lines.join(" ")} You break away from ${who}.`;
 }
 
 /**
@@ -170,7 +332,6 @@ export function fleeFight(game) {
 export function claimSpoil(game, index) {
   const fight = game.fight;
   if (!fight || fight.phase !== "won") return;
-  const creature = creatureById(fight.creatureId);
   /** @type {string} */
   let taken = "";
   if (index >= 0 && index < fight.deck.length) {
@@ -180,12 +341,17 @@ export function claimSpoil(game, index) {
       taken = cardById(id).name;
     }
   }
-  game.purse += creature.coin;
-  if (game.layer === "dungeon") clearDungeonFoe(game);
-  else if (fight.creatureId === "slime") clearMonsterHere(game);
+  const coin = fight.foes.reduce((sum, foe) => sum + creatureById(foe.creatureId).coin, 0);
+  game.purse += coin;
+  if (game.layer === "dungeon") {
+    if (fight.tiles.length) clearPack(game, fight.tiles);
+    else clearDungeonFoe(game);
+  } else if (fight.foes.some((foe) => foe.creatureId === "slime")) {
+    clearMonsterHere(game);
+  }
   game.fight = null;
   game.screen = travelScreen(game);
-  const coinBit = creature.coin > 0 ? `${creature.coin} coin. ` : "";
+  const coinBit = coin > 0 ? `${coin} coin. ` : "";
   game.message = taken ? `${coinBit}You take ${taken}.` : `${coinBit}You leave the rest.`;
 }
 

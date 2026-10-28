@@ -1,6 +1,6 @@
 import { BODY, buyCard, canUseInField, cardById, castIntoRuin, craftSlots, creatureById, deckWeight, isCraftedId, placeFieldHeal, sellCard, sellPayout, siftRuin, uncraftCard } from "./cards.js";
-import { applyDown, beginFight, claimSpoil, fleeFight, playCombatCard, rollEncounter } from "./combat.js";
-import { DUNGEON, dungeonName, foeKind, generateDungeon, moveInDungeon } from "./dungeon.js";
+import { applyDown, beginFight, claimSpoil, fleeFight, metalWasted, playCombatCard, rollEncounter } from "./combat.js";
+import { DUNGEON, dungeonName, foeKind, generateDungeon, moveInDungeon, packAt } from "./dungeon.js";
 import { KEYS, directionFromSwipe } from "./direction.js";
 import { TILES, createGame, groundName, tileAt, travel } from "./game.js";
 import { renderBattlefield, renderFightPlayer, renderCard, renderCreature, renderHitbox, renderMap, renderPlayer } from "./render.js";
@@ -172,7 +172,10 @@ export function mount(root) {
         game.screen = "ruin";
       } else {
         const kind = under ? foeKind(under) : null;
-        if (kind) beginFight(game, kind, false);
+        if (kind) {
+          const pack = packAt(dungeon, dungeon.x, dungeon.y);
+          beginFight(game, pack.kinds, false, pack.tiles);
+        }
       }
       noteDay(beforeClock);
       draw();
@@ -313,7 +316,7 @@ export function mount(root) {
   }
 
   function aimBody() {
-    if (aim?.mode === "fight" && game.fight) return maskFromLines(creatureById(game.fight.creatureId).shape);
+    if (aim?.mode === "fight" && game.fight) return game.fight.body;
     return youBody();
   }
 
@@ -376,15 +379,17 @@ export function mount(root) {
     if (!aim) return;
     const stamp = aimStamp();
     const who = aim.mode === "heal" ? "you" : "foe";
-    const box = stage.querySelector(who === "foe" ? `[data-hitbox="foe"][data-foe="0"], [data-hitbox="foe"]` : `[data-hitbox="${who}"]`);
-    if (!box || !stamp) return;
-    box.querySelectorAll("[data-r]").forEach((node) => {
-      if (!(node instanceof HTMLElement)) return;
-      const r = Number(node.dataset.r);
-      const c = Number(node.dataset.c);
-      const covered = stampCovers(stamp, aim.ar, aim.ac, r, c);
-      node.classList.toggle("ghost", covered);
-      if (node.classList.contains("margin")) node.textContent = covered ? "#" : ".";
+    const boxes = stage.querySelectorAll(who === "foe" ? `[data-hitbox="foe"]` : `[data-hitbox="${who}"]`);
+    if (!stamp || boxes.length === 0) return;
+    boxes.forEach((box) => {
+      box.querySelectorAll("[data-r]").forEach((node) => {
+        if (!(node instanceof HTMLElement)) return;
+        const r = Number(node.dataset.r);
+        const c = Number(node.dataset.c);
+        const covered = stampCovers(stamp, aim.ar, aim.ac, r, c);
+        node.classList.toggle("ghost", covered);
+        if (node.classList.contains("margin")) node.textContent = covered ? "#" : ".";
+      });
     });
   }
 
@@ -394,8 +399,7 @@ export function mount(root) {
     const fight = game.fight;
     if (!id || !fight) return;
     const card = cardById(id);
-    const creature = creatureById(fight.creatureId);
-    if (card.tags.includes("metal") && creature.tags.includes("acid")) {
+    if (metalWasted(fight, card)) {
       playCombatCard(game, index, null);
       aim = null;
       play("hit");
@@ -979,21 +983,36 @@ export function mount(root) {
     cardRow.className = "fight-cards";
     panel.append(cardRow);
     renderFightPlayer(cardRow, game);
-    for (const foe of [fight]) renderCreature(cardRow, foe);
+    for (const foe of fight.foes) {
+      const twins = fight.foes.filter((other) => other.creatureId === foe.creatureId).length > 1;
+      const name = twins ? `${fight.foes.indexOf(foe) === 0 ? "West" : "East"} ${foe.name.toLowerCase()}` : foe.name;
+      renderCreature(cardRow, { ...foe, name });
+    }
     const stamp = aim?.mode === "fight" ? aimStamp() : null;
-    // One shared battlefield grid: you on the left, then each creature, all on one floor.
-    // Only single fights exist now, but this takes a list so task 35 can add more.
-    const foes = [fight];
     const pad = fight.phase === "choose" ? foePad() : 0;
     renderBattlefield(
       panel,
       { label: "Player", cls: "c-white", body: youBody(), cells: game.cells },
-      foes.map((foe) => ({
-        label: foe.name,
-        cls: "c-red",
-        body: maskFromLines(creatureById(foe.creatureId).shape),
-        cells: foe.cells,
-      })),
+      fight.foes.map((foe) => {
+        /** @type {number[][]} */
+        const cells = [];
+        for (let r = 0; r < foe.height; r++) {
+          /** @type {number[]} */
+          const row = [];
+          for (let c = 0; c < foe.width; c++) row.push(fight.cells[foe.originR + r]?.[foe.originC + c] ? 1 : 0);
+          cells.push(row);
+        }
+        const twins = fight.foes.filter((other) => other.creatureId === foe.creatureId).length > 1;
+        const name = twins ? `${fight.foes.indexOf(foe) === 0 ? "West" : "East"} ${foe.name.toLowerCase()}` : foe.name;
+        return {
+          label: name,
+          cls: "c-red",
+          body: maskFromLines(creatureById(foe.creatureId).shape),
+          cells,
+          originR: foe.originR,
+          originC: foe.originC,
+        };
+      }),
       stamp ? { mask: stamp, ar: aim?.ar ?? 0, ac: aim?.ac ?? 0 } : null,
       pad,
       (r, c, event) => {

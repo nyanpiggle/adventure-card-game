@@ -152,15 +152,7 @@ export function generateDungeon(rng = Math.random) {
   rooms.forEach((room, index) => {
     if (index === 0) return;
     const kind = index % 2 === 1 ? DUNGEON.slime : DUNGEON.wolf;
-    for (let y = room.y; y < room.y + room.h; y++) {
-      for (let x = room.x; x < room.x + room.w; x++) {
-        if (cells[y]?.[x] === DUNGEON.floor) {
-          const row = cells[y];
-          if (row) row[x] = kind;
-          return;
-        }
-      }
-    }
+    placeMark(cells, room, kind);
   });
 
   let sx = 1;
@@ -236,6 +228,96 @@ export function clearDungeonFoe(game) {
   const tile = row?.[dungeon.x];
   if (!row || !tile || !foeKind(tile)) return;
   row[dungeon.x] = DUNGEON.floor;
+}
+
+/**
+ * A wolf room puts two wolves on touching floor squares. A slime is still one.
+ * @param {string[][]} cells
+ * @param {{ x: number, y: number, w: number, h: number }} room
+ * @param {string} kind
+ */
+function placeMark(cells, room, kind) {
+  /** @type {{ x: number, y: number }[]} */
+  const floors = [];
+  for (let y = room.y; y < room.y + room.h; y++) {
+    for (let x = room.x; x < room.x + room.w; x++) {
+      if (cells[y]?.[x] === DUNGEON.floor) floors.push({ x, y });
+    }
+  }
+  const first = floors[0];
+  if (!first) return;
+  const row = cells[first.y];
+  if (row) row[first.x] = kind;
+  if (kind !== DUNGEON.wolf) return;
+  const neighbors = [
+    { x: first.x + 1, y: first.y },
+    { x: first.x - 1, y: first.y },
+    { x: first.x, y: first.y + 1 },
+    { x: first.x, y: first.y - 1 },
+  ];
+  for (const next of neighbors) {
+    if (next.x < room.x || next.y < room.y || next.x >= room.x + room.w || next.y >= room.y + room.h) continue;
+    if (cells[next.y]?.[next.x] !== DUNGEON.floor) continue;
+    const line = cells[next.y];
+    if (line) line[next.x] = kind;
+    return;
+  }
+}
+
+/**
+ * The monster under you, plus any of the same mark touching it by a side.
+ * At most two. The west one is first, so it stands on the left of the hitbox.
+ * @param {Dungeon} dungeon
+ * @param {number} x
+ * @param {number} y
+ * @returns {{ kinds: string[], tiles: { x: number, y: number }[] }}
+ */
+export function packAt(dungeon, x, y) {
+  const symbol = dungeon.cells[y]?.[x];
+  const kind = symbol ? foeKind(symbol) : null;
+  if (!kind || !symbol) return { kinds: [], tiles: [] };
+  /** @type {{ x: number, y: number }[]} */
+  const tiles = [];
+  /** @type {{ x: number, y: number }[]} */
+  const queue = [{ x, y }];
+  const seen = new Set([`${x},${y}`]);
+  while (queue.length) {
+    const spot = queue.shift();
+    if (!spot) break;
+    tiles.push(spot);
+    for (const [dx, dy] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]) {
+      const nx = spot.x + dx;
+      const ny = spot.y + dy;
+      const key = `${nx},${ny}`;
+      if (seen.has(key)) continue;
+      if (dungeon.cells[ny]?.[nx] !== symbol) continue;
+      seen.add(key);
+      queue.push({ x: nx, y: ny });
+    }
+  }
+  tiles.sort((a, b) => a.x - b.x || a.y - b.y);
+  const kept = tiles.slice(0, 2);
+  return { kinds: kept.map(() => kind), tiles: kept };
+}
+
+/**
+ * Winning a pack clears every square that joined the fight.
+ * @param {import("./game.js").Game} game
+ * @param {{ x: number, y: number }[]} tiles
+ */
+export function clearPack(game, tiles) {
+  const dungeon = game.dungeon;
+  if (!dungeon) return;
+  for (const tile of tiles) {
+    const row = dungeon.cells[tile.y];
+    const cell = row?.[tile.x];
+    if (row && cell && foeKind(cell)) row[tile.x] = DUNGEON.floor;
+  }
 }
 
 const KNOWN = new Set(Object.values(DUNGEON));

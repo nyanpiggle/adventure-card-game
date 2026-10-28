@@ -294,3 +294,62 @@ export function pictureLines(body, cells) {
 export function stampCovers(stamp, ar, ac, r, c) {
   return Boolean(stamp[r - ar]?.[c - ac]);
 }
+
+/**
+ * Bodies side by side, bottoms aligned, with one empty ground column between them.
+ * That column is marked on `wall` and is not a body cell, so a stamp there cuts nothing.
+ * It is drawn as `.`, not as a wall. A shorter body sits lower, so its bottom row
+ * lines up with the taller one.
+ * @param {Mask[]} masks
+ * @returns {{
+ *   body: Mask,
+ *   wall: Mask,
+ *   cells: Cells,
+ *   places: { originR: number, originC: number, width: number, height: number }[],
+ * }}
+ */
+export function joinBodies(masks) {
+  const height = masks.reduce((max, mask) => Math.max(max, mask.length), 1);
+  const widths = masks.map((mask) => mask.reduce((max, row) => Math.max(max, row.length), 0));
+  const width = widths.reduce((sum, span) => sum + span, 0) + Math.max(0, masks.length - 1);
+  /** @type {Mask} */
+  const body = [];
+  /** @type {Mask} */
+  const wall = [];
+  /** @type {Cells} */
+  const cells = [];
+  for (let r = 0; r < height; r++) {
+    body.push(Array(width).fill(false));
+    wall.push(Array(width).fill(false));
+    cells.push(Array(width).fill(0));
+  }
+  /** @type {{ originR: number, originC: number, width: number, height: number }[]} */
+  const places = [];
+  let col = 0;
+  masks.forEach((mask, index) => {
+    if (index > 0) {
+      for (let r = 0; r < height; r++) {
+        const line = wall[r];
+        if (line) line[col] = true;
+      }
+      col += 1;
+    }
+    const originC = col;
+    const originR = height - mask.length;
+    const span = widths[index] ?? 0;
+    for (let r = 0; r < mask.length; r++) {
+      const row = mask[r] ?? [];
+      for (let c = 0; c < row.length; c++) {
+        if (!row[c]) continue;
+        const y = originR + r;
+        const bodyRow = body[y];
+        const cellRow = cells[y];
+        if (bodyRow) bodyRow[col + c] = true;
+        if (cellRow) cellRow[col + c] = 1;
+      }
+    }
+    places.push({ originR, originC, width: span, height: mask.length });
+    col += span;
+  });
+  return { body, wall, cells, places };
+}

@@ -327,13 +327,14 @@ export function renderHitbox(parent, body, cells, ghost, who, onPointerDown, onP
 
 /**
  * One shared battlefield grid: you on the left, then each creature, all on one floor.
- * Every grid cell keeps the local row/col of the body it belongs to, so stamps,
- * overhangs and drops map exactly as on a lone hitbox. Empty ground belongs to the
- * nearest creature to its left (or the first one), as aiming margin.
+ * Foe cells use the shared enemy grid (a foe's origin plus its local cell), so one
+ * stamp can cross the empty ground column and land on the next enemy. That column
+ * is ground, drawn as `.`, and it is not a body cell. Ground around the bodies is
+ * the aiming margin.
  * @param {HTMLElement} parent
  * @param {{ label: string, cls: string, body: boolean[][], cells: number[][] }} you
- * @param {{ label: string, cls: string, body: boolean[][], cells: number[][] }[]} foes
- * @param {{ mask: boolean[][], ar: number, ac: number } | null} ghost on the first creature
+ * @param {{ label: string, cls: string, body: boolean[][], cells: number[][], originR?: number, originC?: number }[]} foes
+ * @param {{ mask: boolean[][], ar: number, ac: number } | null} ghost in the shared enemy grid
  * @param {number} pad aiming margin a stamp may hang off by
  * @param {(row: number, col: number, event: PointerEvent) => void} [onPointerDown]
  * @param {(row: number, col: number, event: PointerEvent) => void} [onPointerMove]
@@ -343,22 +344,38 @@ export function renderBattlefield(parent, you, foes, ghost, pad, onPointerDown, 
   const sizeOf = (/** @type {boolean[][]} */ b) => ({ h: b.length, w: b.reduce((m, row) => Math.max(m, row.length), 0) });
   const ys = sizeOf(you.body);
   const fs = foes.map((f) => sizeOf(f.body));
-  const tall = Math.max(ys.h, ...fs.map((s) => s.h));
-  // Column layout: left ground, you, gap, foe 0, gap, foe 1, ..., right ground.
+  const given = foes.length > 0 && foes.every((f) => f.originR != null && f.originC != null);
+  /** @type {{ originR: number, originC: number, h: number, w: number }[]} */
+  let places;
+  if (given) {
+    places = foes.map((f, i) => ({
+      originR: f.originR ?? 0,
+      originC: f.originC ?? 0,
+      h: fs[i]?.h ?? 0,
+      w: fs[i]?.w ?? 0,
+    }));
+  } else {
+    const maxH = Math.max(1, ...fs.map((s) => s.h));
+    let cursor = 0;
+    places = fs.map((s, i) => {
+      if (i > 0) cursor += GAP;
+      const place = { originR: maxH - s.h, originC: cursor, h: s.h, w: s.w };
+      cursor += s.w;
+      return place;
+    });
+  }
+  const enemyH = Math.max(1, ...places.map((p) => p.originR + p.h));
+  const enemyW = Math.max(1, ...places.map((p) => p.originC + p.w));
+  const tall = Math.max(ys.h, enemyH);
+  // Left ground, you, one ground column, then the shared enemy grid, then right ground.
   const youCol = Math.max(0, pad - GAP - ys.w);
-  /** @type {number[]} */
-  const foeCol = [];
-  let col = youCol + ys.w + GAP;
-  fs.forEach((s, i) => {
-    if (i > 0) col += GAP; // empty ground between creatures
-    foeCol.push(col);
-    col += s.w;
-  });
-  const width = col + Math.max(1, pad);
-  const minTop = Math.min(...fs.map((s) => tall - s.h));
+  const foeCol = youCol + ys.w + GAP;
+  const width = foeCol + enemyW + Math.max(1, pad);
+  const minTop = tall - enemyH;
   const top = Math.max(0, pad - minTop - 1);
-  const floor = top + tall; // first row below the bodies
+  const floor = top + tall;
   const height = floor + Math.max(0, pad - 1);
+  const enemyTop = floor - enemyH;
 
   const grid = document.createElement("div");
   grid.className = "battlefield";
@@ -380,15 +397,29 @@ export function renderBattlefield(parent, you, foes, ghost, pad, onPointerDown, 
     el.className = `arena-label ${cls}`;
     el.textContent = text;
     el.style.gridRow = "1";
-    el.style.gridColumn = `${c + 1} / span ${span}`;
+    el.style.gridColumn = `${c + 1} / span ${Math.max(1, span)}`;
     grid.append(el);
   };
   label(you.label, you.cls, 0, youCol + ys.w + GAP);
-  foes.forEach((f, i) => label(f.label, f.cls, foeCol[i], fs[i].w + 1));
+  foes.forEach((f, i) => {
+    const place = places[i];
+    if (!place) return;
+    label(f.label, f.cls, foeCol + place.originC, place.w + 1);
+  });
+
+  /** @param {number} gc */
+  const ownerOf = (gc) => {
+    let owner = 0;
+    for (let k = 0; k < places.length; k++) {
+      const place = places[k];
+      if (place && gc >= place.originC) owner = k;
+    }
+    return owner;
+  };
 
   for (let R = 0; R < height; R++) {
     for (let C = 0; C < width; C++) {
-      const place = (/** @type {HTMLElement} */ el, /** @type {HTMLElement} */ into) => {
+      const placeEl = (/** @type {HTMLElement} */ el, /** @type {HTMLElement} */ into) => {
         el.style.gridRow = String(R + 2);
         el.style.gridColumn = String(C + 1);
         into.append(el);
@@ -406,41 +437,46 @@ export function renderBattlefield(parent, you, foes, ghost, pad, onPointerDown, 
         cell.textContent = living ? "#" : ".";
         cell.classList.add(living ? "live" : "dead");
         cell.setAttribute("aria-label", `you cell ${yr},${yc} ${living ? "standing" : "hurt"}`);
-        place(cell, youBox);
+        placeEl(cell, youBox);
         continue;
       }
-      // Ground and creature cells belong to the creature whose span this column is in.
-      let i = 0;
-      for (let k = 0; k < foes.length; k++) if (C >= foeCol[k]) i = k;
-      const body = foes[i].body;
-      const r = R - (floor - fs[i].h);
-      const c = C - foeCol[i];
-      const inside = r >= 0 && r < fs[i].h && c >= 0 && c < (body[r]?.length ?? 0);
+      if (foes.length === 0) continue;
+      const gr = R - enemyTop;
+      const gc = C - foeCol;
+      const i = ownerOf(gc);
+      const spot = places[i];
+      const foe = foes[i];
+      const box = foeBoxes[i];
+      if (!spot || !foe || !box) continue;
+      const r = gr - spot.originR;
+      const c = gc - spot.originC;
+      const body = foe.body;
+      const inside = r >= 0 && r < spot.h && c >= 0 && c < (body[r]?.length ?? 0);
       const on = inside && Boolean(body[r]?.[c]);
-      const covered = Boolean(i === 0 && ghost && stampCovers(ghost.mask, ghost.ar, ghost.ac, r, c));
+      const covered = Boolean(ghost && stampCovers(ghost.mask, ghost.ar, ghost.ac, gr, gc));
       const cell = document.createElement("button");
       cell.type = "button";
       cell.className = "hitcell";
-      cell.dataset.r = String(r);
-      cell.dataset.c = String(c);
+      cell.dataset.r = String(gr);
+      cell.dataset.c = String(gc);
       if (!on) {
         cell.classList.add("margin");
         cell.textContent = covered ? "#" : ".";
         cell.tabIndex = -1;
         cell.setAttribute("aria-hidden", "true");
-      } else if (foes[i].cells[r]?.[c]) {
+      } else if (foe.cells[r]?.[c]) {
         cell.textContent = "#";
         cell.classList.add("live");
-        cell.setAttribute("aria-label", `foe cell ${r},${c} standing`);
+        cell.setAttribute("aria-label", `foe cell ${gr},${gc} standing`);
       } else {
         cell.textContent = ".";
         cell.classList.add("dead");
-        cell.setAttribute("aria-label", `foe cell ${r},${c} hurt`);
+        cell.setAttribute("aria-label", `foe cell ${gr},${gc} hurt`);
       }
       if (covered) cell.classList.add("ghost");
-      if (onPointerDown) cell.addEventListener("pointerdown", (event) => onPointerDown(r, c, event));
-      if (onPointerMove) cell.addEventListener("pointermove", (event) => onPointerMove(r, c, event));
-      place(cell, foeBoxes[i]);
+      if (onPointerDown) cell.addEventListener("pointerdown", (event) => onPointerDown(gr, gc, event));
+      if (onPointerMove) cell.addEventListener("pointermove", (event) => onPointerMove(gr, gc, event));
+      placeEl(cell, box);
     }
   }
   grid.append(youBox, ...foeBoxes);

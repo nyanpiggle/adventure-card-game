@@ -202,27 +202,34 @@ If you strike an `acid` creature with a `metal` card, the acid eats that card. T
 
 ## Combat
 
-Stepping onto `S` starts a fight with that slime. A wolf can also stop you on open ground (see Random encounters). Village and ruin squares do not roll an encounter.
+Stepping onto `S` starts a fight with that slime. A wolf can also stop you on open ground (see Random encounters). At night that wolf brings a second wolf. Village and ruin squares do not roll an encounter. In the ruin, two wolves on touching squares are one fight (see Ruin).
 
-Health in a fight is the hitbox. A standing cell is `#`. A hurt cell is `.`. A hole in the shape, such as the corners of the slime, is a blank. You go down when none of your cells are left. The creature breaks when none of its cells are left.
+Health in a fight is the hitbox. A standing cell is `#`. A hurt cell is `.`. A hole in the shape, such as the corners of the slime, is a blank. You go down when none of your cells are left. A foe breaks when none of its cells are left. The fight is won when every foe has broken.
 
-The fight screen mirrors itself top and bottom. At the top, your `Player` card sits to the left of the creature's card. Below them is one shared battlefield grid: your health on the left under `Player`, the creature's health one empty ground column to the right under its name, and dim ground cells all around both. Both stand on the same floor, so their bottom rows line up and a shorter creature, such as the wolf, sits lower than you. You strike into this grid, and the creature's strikes land on your cells in the same grid.
+A fight holds one or two enemies. Two is the most. The fight screen mirrors itself top and bottom. At the top, your `Player` card sits to the left of each creature's card, in the same order as the grid. Below them is one shared battlefield: your health on the left under `Player`, then each enemy under its name. One empty ground column sits between you and the first enemy, and between each pair of enemies. You and they stand on the same floor, so the bottom rows line up and a shorter creature sits lower. Dim ground cells surround the bodies. You strike into this grid. A stamp that lands on the empty column cuts nothing. A shape long enough to reach past it cuts both enemies. Two wolves look like this, where `.` is that empty column:
 
-You play one card whose use is `combat` or `both`. Field cards cannot be played. A number, or a tap, arms the card and centers its shape on the creature. The shape may hang off any side. Its top-left can sit above or west of the body, on a negative cell, so a long blade or the arms of a cross can be centered even when they are taller or wider than the health. The dim cells around the hitbox are that margin. A `#` drawn there is part of the weapon and cuts nothing. Drag onto a margin cell, or nudge with the arrows. `R` turns the shape a quarter turn clockwise. Strike or Enter swings. Dropping the card on the hitbox swings too. `X` puts the card down without swinging. Cells of the stamp that miss the body, or land on a cell that is already hurt, do nothing. A swing that cuts nothing is still your turn.
+```
+###.###
+###.###
+```
 
-A metal card played on an acid creature is eaten at once. You do not place it. It deals no harm. The Belt Knife against the slime is that trade.
+The Belt Knife is four cells in a row, and two wolves are seven cells across, so a knife laid across the middle clips the east wolf. The creatures' strikes land on your cells in the same grid.
 
-If the creature's hitbox is empty, it does not hit back.
+You play one card whose use is `combat` or `both`. Field cards cannot be played. A number, or a tap, arms the card and centers its shape on the foes. The shape may hang off any side. Its top-left can sit above or west of the body, on a negative cell, so a long blade or the arms of a cross can be centered even when they are taller or wider than the health. The dim cells around the hitbox are that margin. A `#` drawn there is part of the weapon and cuts nothing. Drag onto a margin cell, or nudge with the arrows. `R` turns the shape a quarter turn clockwise. Strike or Enter swings. Dropping the card on the hitbox swings too. `X` puts the card down without swinging. Cells of the stamp that miss the body, or land on a cell that is already hurt, do nothing. A swing that cuts nothing is still your turn.
 
-Otherwise the creature plays the first card of its deck, lays that card's shape on you wherever it cuts the most cells, and moves that card to the back of its deck. Ties keep the unturned shape, then a higher cell, then a cell further west. An empty deck scratches your north-most standing cell, and the west-most if several share that row.
+A metal card played on a fight where every creature still up is acid is eaten at once. You do not place it. It deals no harm. The Belt Knife against the slime is that trade. In a mixed fight you still place the card. If any cell of the stamp covers an acid body, even a cell that is already hurt, the acid eats the card and the swing cuts nothing, including a beast the shape also covered. Metal that only covers a beast is not eaten.
+
+If every foe's hitbox is empty, none of them hit back.
+
+Otherwise each foe that still has a cell left plays the first card of its own deck, lays that card's shape on you wherever it cuts the most cells, and moves that card to the back of its deck. They go from the west. Ties keep the unturned shape, then a higher cell, then a cell further west. An empty deck scratches your north-most standing cell, and the west-most if several share that row. A foe with no cells left does not swing. If one of them drops you, the ones still waiting do not swing either.
 
 Then:
 
-- Both still up: continue, and choose again.
-- Creature at 0 cells: it breaks. You gain its coin. You may take one card from its deck, or leave them. A slain slime is removed from the map. A wolf was never a square.
+- Anyone still up, on either side: continue, and choose again.
+- Every foe at 0 cells: they break. You gain the coin of each of them, added together. You may take one card from the decks they were carrying, or leave them. A slain slime on the plains is removed from the map. Wolves from a random encounter were never squares. A pack in the ruin clears every square that joined the fight.
 - You at 0 cells: you go down. See below.
 
-Fleeing is allowed on your turn. The creature still gets one hit, placed the same way. If you are still up, you are back on the map. If that hit drops you, you go down.
+Fleeing is allowed on your turn. Every foe that is still up gets one hit, from the west, placed the same way. If you are still up, you are back on the map. If a hit drops you, you go down, and any foe who had not swung yet does not.
 
 ## Going down
 
@@ -254,7 +261,7 @@ From the game menu, `5` clears the save. It asks first. Yes starts the zone over
 
 ## Random encounters
 
-The zone is plains. On each move onto open ground, if five moves have passed since the last random encounter, a wolf may appear. The chance is 1 in 10 by day, 1 in 8 at dawn and dusk, and 1 in 5 at night. The five-move cooldown starts when the wolf appears, not when a roll misses. It does not apply to the slime, the village, or the ruin. The first move of a trip can already roll.
+The zone is plains. On each move onto open ground, if five moves have passed since the last random encounter, a wolf may appear. The chance is 1 in 10 by day, 1 in 8 at dawn and dusk, and 1 in 5 at night. At night the encounter is two wolves. The other watches are still one wolf. The five-move cooldown starts when the wolf or the pair appears, not when a roll misses. It does not apply to the slime, the village, or the ruin. The first move of a trip can already roll.
 
 ## Village
 
@@ -283,7 +290,7 @@ The ruin is not an open field. It is rooms of a few squares, joined by straight 
 | Wolf | `  W  ` |
 | Slime | `  S  ` |
 
-`W` and `S` are the first letter of the monster. Stepping onto one starts a fight with that creature. A wolf in the ruin is a square, not a random encounter. Killing it clears the square. The plains slime is a different creature and stays where it was.
+`W` and `S` are the first letter of the monster. Stepping onto one starts a fight with that creature. If another of the same mark touches that square by a side, it joins the fight, up to two. A wolf room is placed as two wolves on touching floor squares, so stepping on either fights both, with one empty ground column between them. Winning clears both squares. A slime is still one square. A ruin you already entered keeps the rooms it had, so an older delve can still hold a lone wolf. A wolf in the ruin is a square, not a random encounter. Killing it clears the square. The plains slime is a different creature and stays where it was.
 
 You appear on the stairs. Step off them to explore. Step back onto `<` to climb out to the plains, still standing on `R`. A wall, or the edge, does not move you: "The stone does not give."
 

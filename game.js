@@ -19,13 +19,31 @@ export const ZONE_SIZE = 25;
  * @typedef {{
  *   creatureId: string,
  *   name: string,
+ *   deck: string[],
+ *   originR: number,
+ *   originC: number,
+ *   width: number,
+ *   height: number,
  *   health: number,
  *   healthMax: number,
+ * }} Foe
+ */
+
+/**
+ * One fight. Several foes share one hitbox. One column of empty ground sits
+ * between them. `wall` marks that column. It is not a body cell, and it is drawn as `.`.
+ * @typedef {{
+ *   foes: Foe[],
+ *   body: boolean[][],
+ *   wall: boolean[][],
  *   cells: number[][],
+ *   health: number,
+ *   healthMax: number,
  *   deck: string[],
  *   phase: "choose" | "exchange" | "won" | "lost",
  *   log: string[],
  *   random: boolean,
+ *   tiles: { x: number, y: number }[],
  * }} Fight
  */
 
