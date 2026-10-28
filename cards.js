@@ -236,7 +236,7 @@ export const CREATURES = {
   slime: {
     id: "slime",
     name: "Slime",
-    tags: ["acid"],
+    tags: ["acid", "brave"],
     health: countLines(BODY.slime),
     coin: 1,
     deck: ["spit", "spit"],

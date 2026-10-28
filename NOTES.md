@@ -194,7 +194,7 @@ A wolf and a slime each have a creature card. You strike that card, not a separa
 | Creature | Tags | Shape | Cells | Coin | Deck |
 | --- | --- | --- | --- | --- | --- |
 | Wolf | beast | two rows of `###` | 6 | 2 | Fang, Fang |
-| Slime | acid | a diamond, ` # ` / `###` / ` # ` | 5 | 1 | Acid Spit, Acid Spit |
+| Slime | acid, brave | a diamond, ` # ` / `###` / ` # ` | 5 | 1 | Acid Spit, Acid Spit |
 
 ## Tags
 
