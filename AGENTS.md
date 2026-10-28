@@ -104,6 +104,8 @@ Everything a character or monster has or can do is a card. That includes items, 
     ```
     When an enemy is dead (its health shape has no cells left), it stops attacking, while the others fight on.
     How enemies are grouped, how many can appear, and how their attacks take turns are not decided yet.
+36. **Wounded enemies run away.** When an enemy is down to 1 health (1 cell left in its health shape), it runs away, unless it has the `brave` tag. Certain mindless enemies, such as slimes, have the `brave` tag and fight to the end.
+    What happens when an enemy runs away (rewards, whether it comes back) is not decided yet.
 
 ## Version control
 
