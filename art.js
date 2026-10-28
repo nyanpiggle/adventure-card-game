@@ -20,7 +20,7 @@ function block(lines) {
 
 /** @type {Record<string, string[]>} */
 export const ART = {
-  staff: block(["    |    ", "    |    ", "   /|\\   ", "  / | \\  ", " /  |  \\ "]),
+  staff: block(["    _    ", "   ( )   ", "    |    ", "    |    ", "    |    "]),
   bread: block([
     " ___________ ",
     "/           \\",
