@@ -3,7 +3,7 @@ import { applyDown, beginFight, claimSpoil, fleeFight, playCombatCard, rollEncou
 import { DUNGEON, dungeonName, foeKind, generateDungeon, moveInDungeon } from "./dungeon.js";
 import { KEYS, directionFromSwipe } from "./direction.js";
 import { TILES, createGame, groundName, tileAt, travel } from "./game.js";
-import { renderCard, renderCreature, renderHitbox, renderMap, renderPlayer } from "./render.js";
+import { renderBattlefield, renderFightPlayer, renderCard, renderCreature, renderHitbox, renderMap, renderPlayer } from "./render.js";
 import { controlLocked, loadSettings, saveSettings, toggleSetting } from "./settings.js";
 import { clearSave, readSave, restAtInn, savePresent, writeSaveInto } from "./save.js";
 import { centerAnchor, clampAnchor, maskFromLines, pictureLines, rotateMask, stampCovers } from "./shapes.js";
@@ -376,7 +376,7 @@ export function mount(root) {
     if (!aim) return;
     const stamp = aimStamp();
     const who = aim.mode === "heal" ? "you" : "foe";
-    const box = stage.querySelector(`[data-hitbox="${who}"]`);
+    const box = stage.querySelector(who === "foe" ? `[data-hitbox="foe"][data-foe="0"], [data-hitbox="foe"]` : `[data-hitbox="${who}"]`);
     if (!box || !stamp) return;
     box.querySelectorAll("[data-r]").forEach((node) => {
       if (!(node instanceof HTMLElement)) return;
@@ -974,62 +974,40 @@ export function mount(root) {
       return;
     }
     const panel = panelEl("FIGHT");
-    renderCreature(panel, fight);
+    // Cards row mirrors the battlefield: you on the left, then each creature.
+    const cardRow = document.createElement("div");
+    cardRow.className = "fight-cards";
+    panel.append(cardRow);
+    renderFightPlayer(cardRow, game);
+    for (const foe of [fight]) renderCreature(cardRow, foe);
     const stamp = aim?.mode === "fight" ? aimStamp() : null;
-    // Arena: you on the left, then each creature to the right, all standing on one floor.
+    // One shared battlefield grid: you on the left, then each creature, all on one floor.
     // Only single fights exist now, but this takes a list so task 35 can add more.
     const foes = [fight];
     const pad = fight.phase === "choose" ? foePad() : 0;
-    const arena = document.createElement("div");
-    arena.className = "arena";
-    panel.append(arena);
-    /** @param {string} text @param {string} cls */
-    const side = (text, cls) => {
-      const col = document.createElement("div");
-      col.className = "arena-side";
-      const label = document.createElement("div");
-      label.className = `arena-label ${cls}`;
-      label.textContent = text;
-      col.append(label);
-      arena.append(col);
-      return col;
-    };
-    const youCol = side(`Player  ${game.health} / ${game.healthMax}`, "c-white");
-    renderHitbox(youCol, youBody(), game.cells, null, "you");
-    foes.forEach((foe, i) => {
-      if (i > 0) {
-        const wall = document.createElement("div");
-        wall.className = "arena-wall c-dim";
-        wall.textContent = "|";
-        arena.append(wall);
-      }
-      const col = side(`${foe.name}  ${Math.max(0, foe.health)} / ${foe.healthMax}`, "c-red");
-      renderHitbox(
-        col,
-        maskFromLines(creatureById(foe.creatureId).shape),
-        foe.cells,
-        stamp ? { mask: stamp, ar: aim?.ar ?? 0, ac: aim?.ac ?? 0 } : null,
-        "foe",
-        (r, c, event) => {
-          if (!aim || aim.mode !== "fight") return;
-          event.preventDefault();
-          moveAim(r, c);
-          paintGhost();
-        },
-        (r, c, event) => {
-          if (!aim || aim.mode !== "fight" || event.buttons !== 1) return;
-          moveAim(r, c);
-          paintGhost();
-        },
-        pad,
-      );
-    });
-    // A creature's margin hangs below its body too; lift every side to the same floor.
-    arena.querySelectorAll(".hitbox").forEach((box) => {
-      if (!(box instanceof HTMLElement)) return;
-      const below = box.dataset.hitbox === "foe" ? pad : 0;
-      box.style.marginBottom = `calc(${pad - below} * 2.6rem + 0.7rem)`;
-    });
+    renderBattlefield(
+      panel,
+      { label: `Player  ${game.health} / ${game.healthMax}`, cls: "c-white", body: youBody(), cells: game.cells },
+      foes.map((foe) => ({
+        label: `${foe.name}  ${Math.max(0, foe.health)} / ${foe.healthMax}`,
+        cls: "c-red",
+        body: maskFromLines(creatureById(foe.creatureId).shape),
+        cells: foe.cells,
+      })),
+      stamp ? { mask: stamp, ar: aim?.ar ?? 0, ac: aim?.ac ?? 0 } : null,
+      pad,
+      (r, c, event) => {
+        if (!aim || aim.mode !== "fight") return;
+        event.preventDefault();
+        moveAim(r, c);
+        paintGhost();
+      },
+      (r, c, event) => {
+        if (!aim || aim.mode !== "fight" || event.buttons !== 1) return;
+        moveAim(r, c);
+        paintGhost();
+      },
+    );
     for (const entry of fight.log) line(panel, entry, "c-orange");
 
     if (fight.phase === "choose") {

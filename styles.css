@@ -210,34 +210,39 @@ button,
   touch-action: none;
 }
 
-.game-root .arena {
-  display: flex;
-  align-items: flex-end;
-  gap: 1.3rem;
-  flex-wrap: nowrap;
+.game-root .battlefield {
+  display: grid;
+  grid-auto-rows: 2.2rem;
+  margin: 0.2rem 0 0.7rem;
+  touch-action: none;
+  max-width: 100%;
   overflow-x: auto;
 }
 
-.game-root .arena-side {
+.game-root .fight-cards {
   display: flex;
-  flex-direction: column;
-  align-self: stretch;
+  flex-wrap: wrap;
+  gap: 0 1rem;
 }
 
-.game-root .arena-wall {
-  align-self: stretch;
-  display: flex;
-  align-items: flex-end;
-  padding-bottom: 0.7rem;
-  white-space: pre;
+.game-root .battlefield .hitcell {
+  width: 2.2rem;
+  height: 2.2rem;
+  line-height: 2.2rem;
+}
+
+.game-root .battlefield .hitbox {
+  display: contents;
 }
 
 .game-root .arena-label {
   white-space: pre;
+  align-self: end;
+  overflow: visible;
 }
 
-.game-root .arena-side .hitbox {
-  margin-top: auto;
+.game-root .hitcell.wall {
+  border-color: transparent;
 }
 
 .game-root .hitrow {
