@@ -136,7 +136,7 @@ Every card has `id`, `name`, `weight`, `value`, `damage`, `use`, `tags`, `text`,
 | Stone Spear | combat | 6 | 8 | 3 | stone, wood, attack | crafted |
 | Glass Bottle | field | 0 | 25 | 1 | container | village |
 | Rare Herbs | field | 0 | 10 | 1 | medicine | village |
-| Staff of Fireballs | combat | 8 | 20 | 4 | fire, attack | crafted |
+| Staff of Fireballs | combat | 17 | 40 | 4 | fire, attack | crafted |
 | Healing Potion | field | 0 | 40 | 1 | medicine | crafted |
 
 The Belt Knife's harm is 4, and Acid Spit's is 3. Both used to be one less. The extra cell is the shape.
@@ -157,7 +157,7 @@ The shapes:
 | Fang | three rows of `#` |
 | Acid Spit | `##` / `#` |
 | Stone Spear | `  #`, then ` ##`, then `###` |
-| Staff of Fireballs | ` ## ` / `####` / ` ## ` |
+| Staff of Fireballs | `# # #` / ` ### ` / `#####` / ` ### ` / `# # #` |
 | Trail Bread | two rows of `##` |
 | Rare Herbs | `#` then ` #`, twice |
 | Healing Potion | four rows of `##` |
@@ -175,7 +175,7 @@ The bench has two reagent slots and one catalyst slot. Each slot opens the deck 
 
 The one spear recipe is Ashen Shard and Walking Staff, with a Coil of Rope as the catalyst. It makes a Stone Spear. The two reagents are spent. The rope comes back. Reagent order does not matter. The spear's harm is 6 and its price is 8, more than either reagent alone.
 
-A Staff of Fireballs is a Stone Spear and a Copper Charm, with a Pitch Torch as the catalyst. The spear is the ashen one, made from the shard. The charm is the copper piece on the counter. The torch comes back. The staff's harm is 8 and its price is 20.
+A Staff of Fireballs is a Stone Spear and a Copper Charm, with a Pitch Torch as the catalyst. The spear is the ashen one, made from the shard. The charm is the copper piece on the counter. The torch comes back. The staff's harm is 17 and its price is 40.
 
 A Healing Potion is a Glass Bottle and Rare Herbs, with Acid Spit as the catalyst. The spit comes back. The bottle costs 25 coin at the village, and it is a container. The herbs cost 10, and they are medicine: chewing them can restore up to 4 cells. The potion's shape is your whole body.
 
