@@ -156,7 +156,7 @@ The shapes:
 | Belt Knife | `####` |
 | Fang | three rows of `#` |
 | Acid Spit | `##` / `#` |
-| Stone Spear | two rows of `  # ` then `####` |
+| Stone Spear | `  #`, then ` ##`, then `###` |
 | Staff of Fireballs | ` ## ` / `####` / ` ## ` |
 | Trail Bread | two rows of `##` |
 | Rare Herbs | `#` then ` #`, twice |

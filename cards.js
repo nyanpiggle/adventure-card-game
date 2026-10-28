@@ -128,11 +128,11 @@ export const CARDS = {
     name: "Stone Spear",
     weight: 3,
     value: 8,
-    damage: countLines(["  # ", "  # ", "####"]),
+    damage: countLines(["  #", " ##", "###"]),
     use: "combat",
     tags: ["stone", "wood", "attack"],
     text: "An ashen shard lashed to a walking staff. It outfights both parts.",
-    shape: ["  # ", "  # ", "####"],
+    shape: ["  #", " ##", "###"],
   },
   bottle: {
     id: "bottle",
