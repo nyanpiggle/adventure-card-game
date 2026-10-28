@@ -356,9 +356,9 @@ export function renderBattlefield(parent, you, foes, ghost, pad, onPointerDown, 
   });
   const width = col + Math.max(1, pad);
   const minTop = Math.min(...fs.map((s) => tall - s.h));
-  const top = Math.max(1, pad - minTop);
+  const top = Math.max(0, pad - minTop - 1);
   const floor = top + tall; // first row below the bodies
-  const height = floor + Math.max(1, pad);
+  const height = floor + Math.max(0, pad - 1);
 
   const grid = document.createElement("div");
   grid.className = "battlefield";
