@@ -102,6 +102,7 @@ Everything a character or monster has or can do is a card. That includes items, 
     When an enemy starts to run away, it does not attack you that turn, so you get a free attack against it, just as an enemy gets a free attack when you flee. If you fail to kill it on your following turn, it disappears from the combat and you get no reward for it. In fights with several enemies this is a deliberate choice: focus the fleeing enemy to bring it down (risking the others surviving another turn), or let it go and lose its reward.
 37. **Damage animation.** When cells are knocked out of a health shape, they do not vanish instantly: the struck `#` cells fade through a short series of changing colours (e.g. a gradient toward black or white) and then disappear. This applies both when you hit an enemy and when an enemy hits you, so you watch your own health cells fade where the attack landed. It is fully ASCII: only the text colour changes, with no images or new glyphs.
     The exact colours and timing are not decided yet.
+38. **Done. Rewards follow how many enemies you fought.** Coin was already one purse from each foe, added together. Loot matches that: after they break, you may take one card from each foe's own deck, or leave that foe's cards. The offers come from the west. Leaving one does not leave the others. A foe with an empty deck is skipped. This replaces the single card taken from the whole pack in task 35. Rules are in `NOTES.md`.
 
 ## Version control
 

@@ -1,5 +1,5 @@
 import { BODY, buyCard, canUseInField, cardById, castIntoRuin, craftSlots, creatureById, deckWeight, isCraftedId, placeFieldHeal, sellCard, sellPayout, siftRuin, uncraftCard } from "./cards.js";
-import { applyDown, beginFight, claimSpoil, fleeFight, metalWasted, playCombatCard, rollEncounter } from "./combat.js";
+import { applyDown, beginFight, claimSpoil, fleeFight, metalWasted, playCombatCard, rollEncounter, spoilOffer } from "./combat.js";
 import { DUNGEON, dungeonName, foeKind, generateDungeon, moveInDungeon, packAt } from "./dungeon.js";
 import { KEYS, directionFromSwipe } from "./direction.js";
 import { TILES, createGame, groundName, tileAt, travel } from "./game.js";
@@ -1069,21 +1069,25 @@ export function mount(root) {
         draw();
       }));
     } else if (fight.phase === "won") {
-      line(panel, "Take one card, or leave them.", "c-dim");
-      fight.deck.forEach((id, index) => {
-        const card = cardById(id);
-        const letter = String.fromCharCode(97 + index);
-        panel.append(
-          button(`${letter}  ${padName(card.name)} ${card.value}`, () => {
-            claimSpoil(game, index);
-            draw();
-          }),
-        );
-      });
-      panel.append(button("0  Leave them", () => {
-        claimSpoil(game, -1);
-        draw();
-      }));
+      const offer = spoilOffer(fight);
+      if (offer) {
+        line(panel, offer.prompt, "c-dim");
+        if (fight.taken.length) line(panel, `Taken: ${fight.taken.join(", ")}.`, "c-yellow");
+        offer.deck.forEach((id, index) => {
+          const card = cardById(id);
+          const letter = String.fromCharCode(97 + index);
+          panel.append(
+            button(`${letter}  ${padName(card.name)} ${card.value}`, () => {
+              claimSpoil(game, index);
+              draw();
+            }),
+          );
+        });
+        panel.append(button(offer.leave, () => {
+          claimSpoil(game, -1);
+          draw();
+        }));
+      }
     } else {
       panel.append(button("1  Wake", () => wake()));
     }
@@ -1165,7 +1169,11 @@ export function mount(root) {
     else if (game.screen === "trade") hint.textContent = "Leave when you are done. The inn keeps a bed.";
     else if (game.screen === "inn") hint.textContent = "A bed is 2 coin. Resting is the save.";
     else if (game.screen === "you") hint.textContent = "This card is you.";
-    else if (game.screen === "fight") hint.textContent = "Drag a card onto the hitbox. R turns it. 0 flees and takes one hit.";
+    else if (game.screen === "fight") {
+      hint.textContent = game.fight?.phase === "won"
+        ? "One card from each foe. 0 leaves that foe."
+        : "Drag a card onto the hitbox. R turns it. 0 flees and takes one hit.";
+    }
     else if (game.screen === "ruin" && game.layer === "dungeon") hint.textContent = "Sift or cast, then leave. You are still in the ruin.";
     else if (game.screen === "over") hint.textContent = "The trip is over. Nothing was saved.";
     else hint.textContent = "Step off the ruin when you are done.";
@@ -1257,13 +1265,15 @@ export function mount(root) {
       return;
     }
     if (fight.phase === "won") {
+      const offer = spoilOffer(fight);
+      if (!offer) return;
       if (key === "0" || key === "Escape") {
         claimSpoil(game, -1);
         draw();
         return;
       }
       const letter = letterIndex(key);
-      if (letter >= 0 && letter < fight.deck.length) {
+      if (letter >= 0 && letter < offer.deck.length) {
         claimSpoil(game, letter);
         draw();
       }

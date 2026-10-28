@@ -146,6 +146,8 @@ export function beginFight(game, creatureIds, randomEncounter, tiles = []) {
     health: healthMax,
     healthMax,
     deck: foes.flatMap((foe) => foe.deck.slice()),
+    spoilAt: 0,
+    taken: [],
     phase: "choose",
     log: [openLine(ids)],
     random: randomEncounter,
@@ -288,10 +290,7 @@ export function playCombatCard(game, index, place) {
     });
   }
   if (fight.health <= 0) {
-    fight.health = 0;
-    fight.phase = "won";
-    fight.deck = fight.foes.flatMap((foe) => foe.deck.slice());
-    fight.log = log;
+    openSpoil(game, log);
     return;
   }
   log.push(...enemiesStrike(game));
@@ -326,33 +325,123 @@ export function fleeFight(game) {
 }
 
 /**
- * @param {import("./game.js").Game} game
- * @param {number} index -1 leaves every card
+ * The next broken foe, from `from` on, that is still carrying a card.
+ * @param {import("./game.js").Fight} fight
+ * @param {number} from
  */
-export function claimSpoil(game, index) {
-  const fight = game.fight;
-  if (!fight || fight.phase !== "won") return;
-  /** @type {string} */
-  let taken = "";
-  if (index >= 0 && index < fight.deck.length) {
-    const id = fight.deck[index];
-    if (id) {
-      game.deck.push(id);
-      taken = cardById(id).name;
-    }
+function spoilIndexFrom(fight, from) {
+  for (let i = from; i < fight.foes.length; i++) {
+    const foe = fight.foes[i];
+    if (foe && foe.health <= 0 && foe.deck.length > 0) return i;
   }
-  const coin = fight.foes.reduce((sum, foe) => sum + creatureById(foe.creatureId).coin, 0);
+  return fight.foes.length;
+}
+
+/**
+ * "The west wolf" becomes "the west wolf". "Wolf" becomes "the wolf".
+ * @param {import("./game.js").Fight} fight
+ * @param {number} index
+ */
+function foePhrase(fight, index) {
+  const label = foeLabel(fight, index);
+  if (label.startsWith("The ")) return `the ${label.slice(4)}`;
+  return `the ${label.toLowerCase()}`;
+}
+
+/**
+ * @param {string[]} items
+ */
+function listPhrase(items) {
+  if (items.length <= 1) return items[0] ?? "";
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+/**
+ * They broke. Coin is one purse from each foe that broke.
+ * Each of those foes then offers one card from its own deck.
+ * @param {import("./game.js").Game} game
+ * @param {string[]} log
+ */
+function openSpoil(game, log) {
+  const fight = game.fight;
+  if (!fight) return;
+  fight.health = 0;
+  fight.phase = "won";
+  fight.taken = [];
+  fight.spoilAt = spoilIndexFrom(fight, 0);
+  fight.deck = fight.foes.flatMap((foe) => (foe.health <= 0 ? foe.deck.slice() : []));
+  fight.log = log;
+  if (fight.spoilAt >= fight.foes.length) finishSpoil(game);
+}
+
+/**
+ * The foe whose deck is on offer, or null when the spoil is done.
+ * @param {import("./game.js").Fight} fight
+ * @returns {{ deck: string[], prompt: string, leave: string } | null}
+ */
+export function spoilOffer(fight) {
+  if (fight.phase !== "won") return null;
+  const foe = fight.foes[fight.spoilAt];
+  if (!foe || foe.deck.length === 0) return null;
+  if (fight.foes.length <= 1) {
+    return { deck: foe.deck, prompt: "Take one card, or leave them.", leave: "0  Leave them" };
+  }
+  const who = foePhrase(fight, fight.spoilAt);
+  return {
+    deck: foe.deck,
+    prompt: `Take one card from ${who}, or leave it.`,
+    leave: "0  Leave it",
+  };
+}
+
+/**
+ * Pay every broken foe, then leave the fight.
+ * @param {import("./game.js").Game} game
+ */
+function finishSpoil(game) {
+  const fight = game.fight;
+  if (!fight) return;
+  const coin = fight.foes.reduce((sum, foe) => {
+    if (foe.health > 0) return sum;
+    return sum + creatureById(foe.creatureId).coin;
+  }, 0);
   game.purse += coin;
   if (game.layer === "dungeon") {
     if (fight.tiles.length) clearPack(game, fight.tiles);
     else clearDungeonFoe(game);
-  } else if (fight.foes.some((foe) => foe.creatureId === "slime")) {
+  } else if (fight.foes.some((foe) => foe.health <= 0 && foe.creatureId === "slime")) {
     clearMonsterHere(game);
   }
+  const taken = fight.taken.slice();
   game.fight = null;
   game.screen = travelScreen(game);
   const coinBit = coin > 0 ? `${coin} coin. ` : "";
-  game.message = taken ? `${coinBit}You take ${taken}.` : `${coinBit}You leave the rest.`;
+  const lootBit = taken.length > 0 ? `You take ${listPhrase(taken)}.` : "You leave the rest.";
+  game.message = `${coinBit}${lootBit}`;
+}
+
+/**
+ * Take one card from the foe on offer, or leave that foe's cards.
+ * The next foe is offered after this one. -1 leaves the current foe.
+ * @param {import("./game.js").Game} game
+ * @param {number} index
+ */
+export function claimSpoil(game, index) {
+  const fight = game.fight;
+  if (!fight || fight.phase !== "won") return;
+  const foe = fight.foes[fight.spoilAt];
+  if (foe && index >= 0 && index < foe.deck.length) {
+    const id = foe.deck[index];
+    if (id) {
+      game.deck.push(id);
+      const name = cardById(id).name;
+      fight.taken.push(fight.foes.length > 1 ? `${name} from ${foePhrase(fight, fight.spoilAt)}` : name);
+    }
+  }
+  fight.spoilAt = spoilIndexFrom(fight, fight.spoilAt + 1);
+  if (fight.spoilAt < fight.foes.length) return;
+  finishSpoil(game);
 }
 
 /**

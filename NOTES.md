@@ -99,7 +99,7 @@ A finished sale, a finished purchase, a sift that finds a card, a cast, and a fi
 
 ## Controls and settings
 
-Open the game menu with the `[ Menu ]` button or the `M` key. From a menu, `0` or Escape goes back one screen. While you are laying a heal shape, `0` puts that shape down first. A fight is not a menu: `0` there flees, or leaves the spoil, or wakes you.
+Open the game menu with the `[ Menu ]` button or the `M` key. From a menu, `0` or Escape goes back one screen. While you are laying a heal shape, `0` puts that shape down first. A fight is not a menu: `0` there flees, or leaves that foe's cards, or wakes you. Leaving one foe's cards does not skip the next foe.
 
 Movement inputs are two separate toggles, remembered in `localStorage` under `adventure-card-game:settings`:
 
@@ -226,7 +226,7 @@ Otherwise each foe that still has a cell left plays the first card of its own de
 Then:
 
 - Anyone still up, on either side: continue, and choose again.
-- Every foe at 0 cells: they break. You gain the coin of each of them, added together. You may take one card from the decks they were carrying, or leave them. A slain slime on the plains is removed from the map. Wolves from a random encounter were never squares. A pack in the ruin clears every square that joined the fight.
+- Every foe at 0 cells: they break. You gain the coin of each of them, added together. A pack pays for every foe, not once for the fight. You may take one card from each foe, from that foe's own deck, or leave that foe's cards. The offers come from the west. Leaving one does not leave the others. A foe carrying nothing is skipped. A slain slime on the plains is removed from the map. Wolves from a random encounter were never squares. A pack in the ruin clears every square that joined the fight.
 - You at 0 cells: you go down. See below.
 
 Fleeing is allowed on your turn. Every foe that is still up gets one hit, from the west, placed the same way. If you are still up, you are back on the map. If a hit drops you, you go down, and any foe who had not swung yet does not.

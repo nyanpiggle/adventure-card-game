@@ -32,6 +32,9 @@ export const ZONE_SIZE = 25;
 /**
  * One fight. Several foes share one hitbox. One column of empty ground sits
  * between them. `wall` marks that column. It is not a body cell, and it is drawn as `.`.
+ * `deck` is every card the broken foes are still carrying.
+ * After they break, `spoilAt` is the foe you are choosing from, west to east,
+ * and `taken` is the cards already picked. One card from each foe.
  * @typedef {{
  *   foes: Foe[],
  *   body: boolean[][],
@@ -40,6 +43,8 @@ export const ZONE_SIZE = 25;
  *   health: number,
  *   healthMax: number,
  *   deck: string[],
+ *   spoilAt: number,
+ *   taken: string[],
  *   phase: "choose" | "exchange" | "won" | "lost",
  *   log: string[],
  *   random: boolean,
