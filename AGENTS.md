@@ -103,7 +103,7 @@ Everything a character or monster has or can do is a card. That includes items, 
     ###|###
     ```
     When an enemy is dead (its health shape has no cells left), it stops attacking, while the others fight on.
-    On the fight screen the row runs left to right: the player first, then enemy 1, then enemy 2, and so on, with the enemies separated by the `|` wall. Each has its label above it, and all stand on the same floor, so their bottom rows line up.
+    On the fight screen the row runs left to right: the player first, then enemy 1, then enemy 2, and so on, with the enemies separated by the `|` wall. Each has its label above it, and all stand on the same floor, so their bottom rows line up. They share one battlefield grid, and the cards row at the top follows the same order.
     How enemies are grouped, how many can appear, and how their attacks take turns are not decided yet.
 36. **Wounded enemies run away.** When an enemy is down to 1 health (1 cell left in its health shape), it runs away, unless it has the `brave` tag. Certain mindless enemies, such as slimes, have the `brave` tag and fight to the end.
     When an enemy starts to run away, it does not attack you that turn, so you get a free attack against it, just as an enemy gets a free attack when you flee. If you fail to kill it on your following turn, it disappears from the combat and you get no reward for it. In fights with several enemies this is a deliberate choice: focus the fleeing enemy to bring it down (risking the others surviving another turn), or let it go and lose its reward.
