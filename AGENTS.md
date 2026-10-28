@@ -97,6 +97,13 @@ Everything a character or monster has or can do is a card. That includes items, 
 32. **Done. Clear the save.** The game menu (`5`) can forget the inn. It asks first, then deletes the save and starts the zone over. Settings stay.
 33. **Done. More recipes.** Staff of Fireballs: Stone Spear + Copper Charm, catalyst Pitch Torch (harm 8, value 20). Healing Potion: Glass Bottle + Rare Herbs, catalyst Acid Spit (heals 7). The village sells the bottle for 25 (tag `container`) and the herbs for 10 (tag `medicine`, heals 4). Catalysts come back.
 34. **Done. 2D health bars.** Health is a hitbox of `#` cells. You are four rows of `##` (8). A wolf is two rows of `###` (6). A slime is a diamond of 5. A strike or a heal is a shape laid on that hitbox. Drag the card onto the enemy, or nudge it with the arrows, turn it with `R`, and confirm. Cells that miss do nothing. The count of `#` on a weapon is its harm: the Belt Knife is 4 and Acid Spit is 3. Bread and herbs cover 4. The potion covers the whole body. The inn fills every cell. An old save's health number drops cells from the south-east until the count matches. Rules are in `NOTES.md`.
+35. **Fighting several enemies at once.** Some fights can have more than one enemy, for example 2 wolves attacking you together. All the enemies' health shapes (hitboxes) are shown at once, side by side, separated by a wall 1 cell thick. A strike shape long enough to reach over the wall can hit more than one enemy at once. Example with two wolves (`|` is the wall):
+    ```
+    ###|###
+    ###|###
+    ```
+    When an enemy is dead (its health shape has no cells left), it stops attacking, while the others fight on.
+    How enemies are grouped, how many can appear, and how their attacks take turns are not decided yet.
 
 ## Version control
 
