@@ -210,6 +210,36 @@ button,
   touch-action: none;
 }
 
+.game-root .arena {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.3rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.game-root .arena-side {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+}
+
+.game-root .arena-wall {
+  align-self: stretch;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 0.7rem;
+  white-space: pre;
+}
+
+.game-root .arena-label {
+  white-space: pre;
+}
+
+.game-root .arena-side .hitbox {
+  margin-top: auto;
+}
+
 .game-root .hitrow {
   display: flex;
 }

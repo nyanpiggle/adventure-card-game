@@ -206,6 +206,8 @@ Stepping onto `S` starts a fight with that slime. A wolf can also stop you on op
 
 Health in a fight is the hitbox. A standing cell is `#`. A hurt cell is `.`. A hole in the shape, such as the corners of the slime, is a blank. You go down when none of your cells are left. The creature breaks when none of its cells are left.
 
+The fight screen shows the two hitboxes side by side: yours on the left under `Player`, the creature's on the right under its name. Both stand on the same floor, so their bottom rows line up and a shorter creature, such as the wolf, sits lower than you.
+
 You play one card whose use is `combat` or `both`. Field cards cannot be played. A number, or a tap, arms the card and centers its shape on the creature. The shape may hang off any side. Its top-left can sit above or west of the body, on a negative cell, so a long blade or the arms of a cross can be centered even when they are taller or wider than the health. The dim cells around the hitbox are that margin. A `#` drawn there is part of the weapon and cuts nothing. Drag onto a margin cell, or nudge with the arrows. `R` turns the shape a quarter turn clockwise. Strike or Enter swings. Dropping the card on the hitbox swings too. `X` puts the card down without swinging. Cells of the stamp that miss the body, or land on a cell that is already hurt, do nothing. A swing that cuts nothing is still your turn.
 
 A metal card played on an acid creature is eaten at once. You do not place it. It deals no harm. The Belt Knife against the slime is that trade.

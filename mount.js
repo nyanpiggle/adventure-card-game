@@ -975,29 +975,61 @@ export function mount(root) {
     }
     const panel = panelEl("FIGHT");
     renderCreature(panel, fight);
-    const foeBody = maskFromLines(creatureById(fight.creatureId).shape);
     const stamp = aim?.mode === "fight" ? aimStamp() : null;
-    renderHitbox(
-      panel,
-      foeBody,
-      fight.cells,
-      stamp ? { mask: stamp, ar: aim?.ar ?? 0, ac: aim?.ac ?? 0 } : null,
-      "foe",
-      (r, c, event) => {
-        if (!aim || aim.mode !== "fight") return;
-        event.preventDefault();
-        moveAim(r, c);
-        paintGhost();
-      },
-      (r, c, event) => {
-        if (!aim || aim.mode !== "fight" || event.buttons !== 1) return;
-        moveAim(r, c);
-        paintGhost();
-      },
-      fight.phase === "choose" ? foePad() : 0,
-    );
-    line(panel, `You  ${game.health} / ${game.healthMax}`, "c-white");
-    renderHitbox(panel, youBody(), game.cells, null, "you");
+    // Arena: you on the left, then each creature to the right, all standing on one floor.
+    // Only single fights exist now, but this takes a list so task 35 can add more.
+    const foes = [fight];
+    const pad = fight.phase === "choose" ? foePad() : 0;
+    const arena = document.createElement("div");
+    arena.className = "arena";
+    panel.append(arena);
+    /** @param {string} text @param {string} cls */
+    const side = (text, cls) => {
+      const col = document.createElement("div");
+      col.className = "arena-side";
+      const label = document.createElement("div");
+      label.className = `arena-label ${cls}`;
+      label.textContent = text;
+      col.append(label);
+      arena.append(col);
+      return col;
+    };
+    const youCol = side(`Player  ${game.health} / ${game.healthMax}`, "c-white");
+    renderHitbox(youCol, youBody(), game.cells, null, "you");
+    foes.forEach((foe, i) => {
+      if (i > 0) {
+        const wall = document.createElement("div");
+        wall.className = "arena-wall c-dim";
+        wall.textContent = "|";
+        arena.append(wall);
+      }
+      const col = side(`${foe.name}  ${Math.max(0, foe.health)} / ${foe.healthMax}`, "c-red");
+      renderHitbox(
+        col,
+        maskFromLines(creatureById(foe.creatureId).shape),
+        foe.cells,
+        stamp ? { mask: stamp, ar: aim?.ar ?? 0, ac: aim?.ac ?? 0 } : null,
+        "foe",
+        (r, c, event) => {
+          if (!aim || aim.mode !== "fight") return;
+          event.preventDefault();
+          moveAim(r, c);
+          paintGhost();
+        },
+        (r, c, event) => {
+          if (!aim || aim.mode !== "fight" || event.buttons !== 1) return;
+          moveAim(r, c);
+          paintGhost();
+        },
+        pad,
+      );
+    });
+    // A creature's margin hangs below its body too; lift every side to the same floor.
+    arena.querySelectorAll(".hitbox").forEach((box) => {
+      if (!(box instanceof HTMLElement)) return;
+      const below = box.dataset.hitbox === "foe" ? pad : 0;
+      box.style.marginBottom = `calc(${pad - below} * 2.6rem + 0.7rem)`;
+    });
     for (const entry of fight.log) line(panel, entry, "c-orange");
 
     if (fight.phase === "choose") {
