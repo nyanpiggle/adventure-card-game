@@ -62,8 +62,9 @@ function openLine(ids) {
  * @param {import("./game.js").Fight} fight
  */
 function packPhrase(fight) {
-  const first = fight.foes[0];
-  const second = fight.foes[1];
+  const up = fight.foes.filter((foe) => !foe.fled && foe.health > 0);
+  const first = up[0];
+  const second = up[1];
   if (!first) return "them";
   if (!second) return `the ${first.name.toLowerCase()}`;
   if (first.creatureId === second.creatureId) {
@@ -135,6 +136,8 @@ export function beginFight(game, creatureIds, randomEncounter, tiles = []) {
       height: place?.height ?? 0,
       health: healthMax,
       healthMax,
+      flight: "none",
+      fled: false,
     };
   });
   const healthMax = countMask(joined.body);
@@ -172,7 +175,7 @@ function syncYou(game) {
  */
 export function metalWasted(fight, card) {
   if (!card.tags.includes("metal")) return false;
-  const living = fight.foes.filter((foe) => foe.health > 0);
+  const living = fight.foes.filter((foe) => !foe.fled && foe.health > 0);
   return living.length > 0 && living.every((foe) => creatureById(foe.creatureId).tags.includes("acid"));
 }
 
@@ -223,6 +226,7 @@ function foeStrike(game, foe, label) {
 
 /**
  * Living foes strike from the west. A foe with no cells left does not swing.
+ * A foe that has just started to run does not swing either.
  * If one of them drops you, the rest do not.
  * @param {import("./game.js").Game} game
  * @returns {string[]}
@@ -235,10 +239,82 @@ function enemiesStrike(game) {
   for (let index = 0; index < fight.foes.length; index++) {
     if (game.health <= 0) break;
     const foe = fight.foes[index];
-    if (!foe || foeLiving(fight, foe) <= 0) continue;
+    if (!foe || foe.fled || foe.flight === "spared" || foe.health <= 0) continue;
     lines.push(foeStrike(game, foe, foeLabel(fight, index)));
   }
   return lines;
+}
+
+/**
+ * Drop a runner off the shared grid. The cells are no longer a body.
+ * @param {import("./game.js").Fight} fight
+ * @param {import("./game.js").Foe} foe
+ */
+function blankFoe(fight, foe) {
+  for (let r = 0; r < foe.height; r++) {
+    for (let c = 0; c < foe.width; c++) {
+      const y = foe.originR + r;
+      const x = foe.originC + c;
+      const bodyRow = fight.body[y];
+      const cellRow = fight.cells[y];
+      if (bodyRow) bodyRow[x] = false;
+      if (cellRow) cellRow[x] = 0;
+    }
+  }
+  foe.fled = true;
+  foe.flight = "none";
+}
+
+/**
+ * A foe at 1 cell runs, unless it is brave. The turn it starts, it does not strike.
+ * If it is still up on your next turn, it leaves and pays nothing.
+ * @param {import("./game.js").Fight} fight
+ * @param {string[]} log
+ */
+function resolveFlight(fight, log) {
+  fight.foes.forEach((foe, index) => {
+    if (foe.fled || foe.flight !== "due" || foe.health <= 0) return;
+    const label = gotAway(fight, index);
+    blankFoe(fight, foe);
+    log.push(label);
+  });
+  syncFight(fight);
+  fight.foes.forEach((foe, index) => {
+    if (foe.fled || foe.flight !== "none" || foe.health !== 1) return;
+    if (creatureById(foe.creatureId).tags.includes("brave")) return;
+    foe.flight = "spared";
+    log.push(`${foeLabel(fight, index)} runs.`);
+  });
+}
+
+/** @param {import("./game.js").Fight} fight @param {number} index */
+function gotAway(fight, index) {
+  const who = foePhrase(fight, index);
+  return `${who.charAt(0).toUpperCase()}${who.slice(1)} gets away.`;
+}
+
+/** @param {import("./game.js").Fight} fight */
+function awayPhrase(fight) {
+  const names = fight.foes
+    .map((foe, index) => (foe.fled ? foePhrase(fight, index) : ""))
+    .filter((name) => name);
+  if (names.length === 0) return "";
+  const who = names.length === 1 ? names[0] : listPhrase(names);
+  const verb = names.length === 1 ? "gets" : "get";
+  return `${who.charAt(0).toUpperCase()}${who.slice(1)} ${verb} away.`;
+}
+
+/**
+ * @param {import("./game.js").Game} game
+ * @param {string[]} log
+ */
+function leaveEmpty(game, log) {
+  const fight = game.fight;
+  if (!fight) return;
+  const away = awayPhrase(fight);
+  game.fight = null;
+  game.screen = travelScreen(game);
+  game.message = away || log.join(" ") || "They get away.";
 }
 
 /**
@@ -289,8 +365,10 @@ export function playCombatCard(game, index, place) {
       if ((before[foeIndex] ?? 0) > 0 && foe.health <= 0) log.push(`${foeLabel(fight, foeIndex)} breaks.`);
     });
   }
+  resolveFlight(fight, log);
   if (fight.health <= 0) {
-    openSpoil(game, log);
+    if (fight.foes.some((foe) => !foe.fled && foe.health <= 0)) openSpoil(game, log);
+    else leaveEmpty(game, log);
     return;
   }
   log.push(...enemiesStrike(game));
@@ -300,6 +378,9 @@ export function playCombatCard(game, index, place) {
     log.push("You go down.");
   } else {
     fight.phase = "exchange";
+    for (const foe of fight.foes) {
+      if (foe.flight === "spared") foe.flight = "due";
+    }
   }
   fight.log = log;
 }
@@ -311,7 +392,17 @@ export function playCombatCard(game, index, place) {
 export function fleeFight(game) {
   const fight = game.fight;
   if (!fight || fight.phase !== "choose") return;
-  const lines = enemiesStrike(game);
+  /** @type {string[]} */
+  const lines = [];
+  fight.foes.forEach((foe, index) => {
+    if (foe.fled || foe.health <= 0) return;
+    if (foe.flight !== "due" && foe.flight !== "spared") return;
+    const label = gotAway(fight, index);
+    blankFoe(fight, foe);
+    lines.push(label);
+  });
+  syncFight(fight);
+  lines.push(...enemiesStrike(game));
   if (game.health <= 0) {
     game.health = 0;
     fight.phase = "lost";
@@ -321,7 +412,8 @@ export function fleeFight(game) {
   const who = packPhrase(fight);
   game.fight = null;
   game.screen = travelScreen(game);
-  game.message = `${lines.join(" ")} You break away from ${who}.`;
+  const tail = who === "them" ? "You break away." : `You break away from ${who}.`;
+  game.message = `${lines.join(" ")} ${tail}`.trim();
 }
 
 /**
@@ -332,7 +424,7 @@ export function fleeFight(game) {
 function spoilIndexFrom(fight, from) {
   for (let i = from; i < fight.foes.length; i++) {
     const foe = fight.foes[i];
-    if (foe && foe.health <= 0 && foe.deck.length > 0) return i;
+    if (foe && !foe.fled && foe.health <= 0 && foe.deck.length > 0) return i;
   }
   return fight.foes.length;
 }
@@ -370,7 +462,7 @@ function openSpoil(game, log) {
   fight.phase = "won";
   fight.taken = [];
   fight.spoilAt = spoilIndexFrom(fight, 0);
-  fight.deck = fight.foes.flatMap((foe) => (foe.health <= 0 ? foe.deck.slice() : []));
+  fight.deck = fight.foes.flatMap((foe) => (!foe.fled && foe.health <= 0 ? foe.deck.slice() : []));
   fight.log = log;
   if (fight.spoilAt >= fight.foes.length) finishSpoil(game);
 }
@@ -403,22 +495,18 @@ function finishSpoil(game) {
   const fight = game.fight;
   if (!fight) return;
   const coin = fight.foes.reduce((sum, foe) => {
-    if (foe.health > 0) return sum;
+    if (foe.fled || foe.health > 0) return sum;
     return sum + creatureById(foe.creatureId).coin;
   }, 0);
   game.purse += coin;
-  if (game.layer === "dungeon") {
-    if (fight.tiles.length) clearPack(game, fight.tiles);
-    else clearDungeonFoe(game);
-  } else if (fight.foes.some((foe) => foe.health <= 0 && foe.creatureId === "slime")) {
-    clearMonsterHere(game);
-  }
+  clearSlain(game);
   const taken = fight.taken.slice();
+  const away = awayPhrase(fight);
   game.fight = null;
   game.screen = travelScreen(game);
   const coinBit = coin > 0 ? `${coin} coin. ` : "";
   const lootBit = taken.length > 0 ? `You take ${listPhrase(taken)}.` : "You leave the rest.";
-  game.message = `${coinBit}${lootBit}`;
+  game.message = `${coinBit}${lootBit}${away ? ` ${away}` : ""}`;
 }
 
 /**
@@ -462,6 +550,25 @@ export function applyDown(game) {
   game.layer = "zone";
   game.screen = "over";
   game.message = "You go down. The inn does not remember you.";
+}
+
+/**
+ * A slain foe leaves the map. A foe that got away keeps its square.
+ * @param {import("./game.js").Game} game
+ */
+function clearSlain(game) {
+  const fight = game.fight;
+  if (!fight) return;
+  const slain = fight.foes
+    .map((foe, index) => ({ foe, tile: fight.tiles[index] }))
+    .filter((entry) => !entry.foe.fled && entry.foe.health <= 0);
+  if (game.layer === "dungeon") {
+    const tiles = slain.flatMap((entry) => (entry.tile ? [entry.tile] : []));
+    if (tiles.length) clearPack(game, tiles);
+    else if (slain.length && fight.tiles.length === 0) clearDungeonFoe(game);
+    return;
+  }
+  if (slain.some((entry) => entry.foe.creatureId === "slime")) clearMonsterHere(game);
 }
 
 /**

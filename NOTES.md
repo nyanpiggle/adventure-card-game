@@ -204,7 +204,7 @@ If you strike an `acid` creature with a `metal` card, the acid eats that card. T
 
 Stepping onto `S` starts a fight with that slime. A wolf can also stop you on open ground (see Random encounters). At night that wolf brings a second wolf. Village and ruin squares do not roll an encounter. In the ruin, two wolves on touching squares are one fight (see Ruin).
 
-Health in a fight is the hitbox. A standing cell is `#`. A hurt cell is `.`. A hole in the shape, such as the corners of the slime, is a blank. You go down when none of your cells are left. A foe breaks when none of its cells are left. The fight is won when every foe has broken.
+Health in a fight is the hitbox. A standing cell is `#`. A hurt cell is `.`. A hole in the shape, such as the corners of the slime, is a blank. You go down when none of your cells are left. A foe breaks when none of its cells are left. The fight is won when every foe has broken or got away.
 
 A fight holds one or two enemies. Two is the most. The fight screen mirrors itself top and bottom. At the top, your `Player` card sits to the left of each creature's card, in the same order as the grid. Below them is one shared battlefield: your health on the left under `Player`, then each enemy under its name. One empty ground column sits between you and the first enemy, and between each pair of enemies. You and they stand on the same floor, so the bottom rows line up and a shorter creature sits lower. Dim ground cells surround the bodies. You strike into this grid. A stamp that lands on the empty column cuts nothing. A shape long enough to reach past it cuts both enemies. Two wolves look like this, where `.` is that empty column:
 
@@ -221,15 +221,17 @@ A metal card played on a fight where every creature still up is acid is eaten at
 
 If every foe's hitbox is empty, none of them hit back.
 
-Otherwise each foe that still has a cell left plays the first card of its own deck, lays that card's shape on you wherever it cuts the most cells, and moves that card to the back of its deck. They go from the west. Ties keep the unturned shape, then a higher cell, then a cell further west. An empty deck scratches your north-most standing cell, and the west-most if several share that row. A foe with no cells left does not swing. If one of them drops you, the ones still waiting do not swing either.
+Otherwise each foe that still has a cell left plays the first card of its own deck, lays that card's shape on you wherever it cuts the most cells, and moves that card to the back of its deck. They go from the west. Ties keep the unturned shape, then a higher cell, then a cell further west. An empty deck scratches your north-most standing cell, and the west-most if several share that row. A foe with no cells left does not swing. A foe that has just started to run does not swing either. If one of them drops you, the ones still waiting do not swing either.
+
+A foe with one cell left runs, unless it has the `brave` tag. A slime is brave and fights until none of its cells are left. The turn a foe starts to run, it does not strike, so the blow that left it at one cell is not answered. On your next turn you can kill it. If it is still up after that turn, it leaves the fight. It pays no coin and offers no card. The others stay, so in a pack you choose: spend the turn finishing the runner, or let it go and keep fighting the rest. A runner that is still up when you flee gets away instead of striking.
 
 Then:
 
 - Anyone still up, on either side: continue, and choose again.
-- Every foe at 0 cells: they break. You gain the coin of each of them, added together. A pack pays for every foe, not once for the fight. You may take one card from each foe, from that foe's own deck, or leave that foe's cards. The offers come from the west. Leaving one does not leave the others. A foe carrying nothing is skipped. A slain slime on the plains is removed from the map. Wolves from a random encounter were never squares. A pack in the ruin clears every square that joined the fight.
+- Every foe at 0 cells, or gone: the fight ends. You gain the coin of each foe that broke, added together. A foe that got away pays nothing. A pack pays for every foe you killed, not once for the fight, and not for a runner. You may take one card from each foe that broke, from that foe's own deck, or leave that foe's cards. The offers come from the west. Leaving one does not leave the others. A foe carrying nothing is skipped. A slain slime on the plains is removed from the map. Wolves from a random encounter were never squares. A slain foe in the ruin clears its own square. A foe that got away leaves its square standing.
 - You at 0 cells: you go down. See below.
 
-Fleeing is allowed on your turn. Every foe that is still up gets one hit, from the west, placed the same way. If you are still up, you are back on the map. If a hit drops you, you go down, and any foe who had not swung yet does not.
+Fleeing is allowed on your turn. Every foe that is still up, and not already running, gets one hit, from the west, placed the same way. A runner gets away instead, and pays nothing. If you are still up, you are back on the map. If a hit drops you, you go down, and any foe who had not swung yet does not.
 
 ## Going down
 

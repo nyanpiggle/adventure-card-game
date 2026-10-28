@@ -984,6 +984,7 @@ export function mount(root) {
     panel.append(cardRow);
     renderFightPlayer(cardRow, game);
     for (const foe of fight.foes) {
+      if (foe.fled) continue;
       const twins = fight.foes.filter((other) => other.creatureId === foe.creatureId).length > 1;
       const name = twins ? `${fight.foes.indexOf(foe) === 0 ? "West" : "East"} ${foe.name.toLowerCase()}` : foe.name;
       renderCreature(cardRow, { ...foe, name });
@@ -993,7 +994,7 @@ export function mount(root) {
     renderBattlefield(
       panel,
       { label: "Player", cls: "c-white", body: youBody(), cells: game.cells },
-      fight.foes.map((foe) => {
+      fight.foes.filter((foe) => !foe.fled).map((foe) => {
         /** @type {number[][]} */
         const cells = [];
         for (let r = 0; r < foe.height; r++) {
@@ -1030,6 +1031,14 @@ export function mount(root) {
     for (const entry of fight.log) line(panel, entry, "c-orange");
 
     if (fight.phase === "choose") {
+      fight.foes.forEach((foe, index) => {
+        if (foe.fled || foe.flight !== "due" || foe.health <= 0) return;
+        const twins = fight.foes.filter((other) => other.creatureId === foe.creatureId).length > 1;
+        const name = twins
+          ? `${index === 0 ? "The west" : "The east"} ${foe.name.toLowerCase()}`
+          : foe.name;
+        line(panel, `${name} is running. Kill it this turn or it is gone.`, "c-yellow");
+      });
       if (aim?.mode === "fight") {
         const armed = game.deck[aim.index];
         const name = armed ? cardById(armed).name : "That card";

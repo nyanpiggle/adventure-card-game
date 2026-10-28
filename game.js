@@ -26,6 +26,8 @@ export const ZONE_SIZE = 25;
  *   height: number,
  *   health: number,
  *   healthMax: number,
+ *   flight: "none" | "spared" | "due",
+ *   fled: boolean,
  * }} Foe
  */
 
