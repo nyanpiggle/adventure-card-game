@@ -106,6 +106,8 @@ Everything a character or monster has or can do is a card. That includes items, 
     How enemies are grouped, how many can appear, and how their attacks take turns are not decided yet.
 36. **Wounded enemies run away.** When an enemy is down to 1 health (1 cell left in its health shape), it runs away, unless it has the `brave` tag. Certain mindless enemies, such as slimes, have the `brave` tag and fight to the end.
     When an enemy starts to run away, it does not attack you that turn, so you get a free attack against it, just as an enemy gets a free attack when you flee. If you fail to kill it on your following turn, it disappears from the combat and you get no reward for it. In fights with several enemies this is a deliberate choice: focus the fleeing enemy to bring it down (risking the others surviving another turn), or let it go and lose its reward.
+37. **Damage animation.** When cells are knocked out of a health shape, they do not vanish instantly: the struck `#` cells fade through a short series of changing colours (e.g. a gradient toward black or white) and then disappear. This applies both when you hit an enemy and when an enemy hits you, so you watch your own health cells fade where the attack landed. It is fully ASCII: only the text colour changes, with no images or new glyphs.
+    The exact colours and timing are not decided yet.
 
 ## Version control
 
